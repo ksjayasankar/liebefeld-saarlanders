@@ -1,7 +1,9 @@
 @import "tailwindcss";
 
-/* Design tokens from the AI-template (tailwind.config.js there): brand blues, semantic surfaces, Inter, soft shadows.
-   Light values here; dark (navy) values follow the system setting below. */
+/* Dark mode follows the "dark" class on <html> (set by index.html and Theme.jsx), as in the AI-template. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Design tokens from the AI-template (its tailwind.config.js): brand blues, semantic surfaces, Inter, shadows, motion. */
 @theme {
   --color-brand-50: #eef1fd;
   --color-brand-100: #dde3fb;
@@ -14,23 +16,41 @@
   --color-brand-800: #2b377f;
   --color-brand-900: #232d63;
 
-  --color-ink: #0f172a;     /* main text */
-  --color-page: #ffffff;    /* page background */
-  --color-surface: #f5f7fc; /* soft grey panels */
-  --color-field: #eef1f8;   /* input boxes */
-  --color-card: #ffffff;    /* cards, chips */
-  --color-line: #0f172a;    /* borders, used with low opacity */
+  /* Light values; .dark below swaps them for the navy theme. */
+  --color-ink: rgb(20 27 52);       /* main text */
+  --color-page: rgb(247 248 252);   /* page background */
+  --color-surface: rgb(241 243 249);/* soft grey panels */
+  --color-field: rgb(244 246 251);  /* input boxes */
+  --color-card: rgb(255 255 255);   /* cards, chips, menus */
+  --color-line: rgb(20 27 52);      /* borders, used with low opacity */
 
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
 
   --shadow-pill: 0 1px 0 rgba(255, 255, 255, 0.35) inset, 0 6px 16px -4px rgba(62, 81, 194, 0.55);
-  --shadow-soft: 0 1px 2px rgba(15, 23, 42, 0.06), 0 8px 24px -12px rgba(15, 23, 42, 0.18);
+  --shadow-soft: var(--shadow-soft-value);
+  --shadow-panel: var(--shadow-panel-value);
 
   --animate-ring: ring 1.4s ease-out infinite;
+  --animate-breathe: breathe 1.4s ease-in-out infinite;
+  --animate-pop: pop 0.35s ease-out both;
+  --animate-drift: drift 18s ease-in-out infinite;
   --animate-fade-up: fade-up 0.5s ease-out both;
   @keyframes ring {
     0% { transform: scale(1); opacity: 0.55; }
     100% { transform: scale(1.7); opacity: 0; }
+  }
+  @keyframes breathe {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(0.9); }
+  }
+  @keyframes pop {
+    0% { opacity: 0; transform: translateY(4px) scale(0.6); }
+    70% { opacity: 1; transform: translateY(0) scale(1.06); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes drift {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(3%, -2%) scale(1.05); }
   }
   @keyframes fade-up {
     from { opacity: 0; transform: translateY(8px); }
@@ -38,34 +58,44 @@
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-ink: #e2e8f0;
-    --color-page: #0b1226;
-    --color-surface: #111a34;
-    --color-field: #16213f;
-    --color-card: #131d3a;
-    --color-line: #94a3b8;
-    --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px -12px rgba(0, 0, 0, 0.6);
-    color-scheme: dark;
-  }
+:root {
+  --shadow-soft-value: 0 1px 2px rgb(20 27 52 / 0.05), 0 4px 16px -6px rgb(20 27 52 / 0.12);
+  --shadow-panel-value: 0 1px 2px rgb(20 27 52 / 0.06), 0 16px 40px -16px rgb(35 45 99 / 0.28);
+  color-scheme: light;
+}
+.dark {
+  --color-ink: rgb(226 231 243);
+  --color-page: rgb(11 18 38);
+  --color-surface: rgb(16 25 50);
+  --color-field: rgb(20 30 60);
+  --color-card: rgb(17 27 54);
+  --color-line: rgb(165 180 220);
+  --shadow-soft-value: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px -6px rgb(0 0 0 / 0.5);
+  --shadow-panel-value: 0 1px 2px rgb(0 0 0 / 0.35), 0 16px 40px -16px rgb(0 0 0 / 0.7);
+  color-scheme: dark;
 }
 
 @layer base {
-  body { @apply bg-surface text-ink antialiased; }
+  body { @apply bg-page font-sans text-[15px] leading-relaxed text-ink antialiased; }
   :focus-visible { @apply outline-2 outline-offset-2 outline-brand-500; }
+  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+  @media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after { animation: none !important; transition: none !important; }
+  }
 }
 
 @layer components {
-  .card { @apply rounded-2xl border border-line/10 bg-card p-4 shadow-soft sm:p-6; }
-  .field { @apply w-full rounded-xl border border-line/15 bg-field px-3 py-2 text-ink placeholder:text-ink/45; }
-  .label { @apply mb-1 block text-sm font-medium; }
-  .hint { @apply text-sm text-ink/70; }
-  .btn { @apply inline-flex items-center justify-center rounded-full bg-brand-600 px-5 py-2 font-medium text-white shadow-pill hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50; }
-  .btn-ghost { @apply inline-flex items-center justify-center rounded-full border border-line/15 bg-card px-4 py-2 font-medium hover:bg-field disabled:cursor-not-allowed disabled:opacity-50; }
-  .chip { @apply rounded-full border border-line/15 bg-card px-3 py-1 text-sm hover:border-brand-500 hover:text-brand-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:text-brand-300; }
-  .tag { @apply rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-medium text-brand-800 dark:bg-brand-500/15 dark:text-brand-200; }
-  .warn { @apply rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-900 dark:bg-amber-400/15 dark:text-amber-200; }
+  .card { @apply rounded-2xl border border-line/10 bg-card p-5 shadow-soft sm:p-6; }
+  .field { @apply h-10 w-full rounded-xl border border-line/15 bg-field px-3 text-ink transition-colors placeholder:text-ink/45 focus:border-brand-500; }
+  .label { @apply mb-1.5 block text-sm font-medium; }
+  .hint { @apply text-sm text-ink/65; }
+  .kicker { @apply text-xs font-medium tracking-wider text-ink/60 uppercase; }
+  .btn { @apply inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-brand-600 px-5 py-2 text-sm font-medium text-white shadow-pill transition hover:bg-brand-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none; }
+  .btn-ghost { @apply inline-flex shrink-0 items-center justify-center rounded-full border border-line/15 bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-surface disabled:cursor-not-allowed disabled:opacity-50; }
+  .chip { @apply rounded-full border border-line/15 bg-card px-3 py-1 text-sm transition-colors hover:border-brand-400 hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:text-brand-200; }
+  .tag { @apply rounded-full bg-surface px-2.5 py-0.5 text-xs font-medium text-ink/80 ring-1 ring-line/10 ring-inset; }
+  .tag-brand { @apply rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-medium text-brand-700 dark:bg-brand-500/15 dark:text-brand-200; }
+  .warn { @apply rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-amber-600/20 ring-inset dark:bg-amber-400/10 dark:text-amber-200; }
   .link { @apply font-medium text-brand-600 underline-offset-2 hover:underline dark:text-brand-300; }
-  .kicker { @apply text-xs font-semibold tracking-wide text-ink/60 uppercase; }
+  .source { @apply inline-flex max-w-full items-center gap-1 rounded-full border border-line/15 bg-card px-2 py-0.5 text-xs font-medium text-brand-700 transition-colors hover:border-brand-400 dark:text-brand-200; }
 }

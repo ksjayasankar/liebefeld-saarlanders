@@ -105,3 +105,59 @@ Every input has a visible or `sr-only` label; need rows name their number ("Cate
 ## DD-20 Step 5 (verification): browser check with a temporary mock outside the repo
 
 The API was not running (it is being changed in parallel), so the screens were checked with `npm run dev` under a throw-away Vite config in the session scratchpad that serves the fictional sample (`search_result.sample.json`) for `/api/*`. Nothing mock-related is in `web/`. Checked: draft → need card with cited and ignored sentences → search → lead cards with people, quotes and links; a feedback chip returns the `message`; a 500 shows `detail` and `request_id`; at 390px wide the page has no horizontal scroll; all external links carry `target="_blank" rel="noopener noreferrer"`; no console warnings.
+
+## DD-21 Polish step (colour scheme): the template's tokens, light mode as the calm default look
+
+Request: bring the front end closer to the template's look ("trusty interface feeling"). The brand scale and the six semantic tokens keep the template's names and roles. The values are tuned for a work tool. Light mode: a cool off-white page (`247 248 252`), white cards, `241 243 249` soft panels, a navy-tinted ink (`20 27 52`) instead of pure black, and borders drawn as ink at 10–15% opacity. Dark mode: the README's navy page (`11 18 38`) with slightly lighter navy cards. Light mode uses a grey page under white cards rather than the landing page's white-on-white, so a page with many cards keeps its structure without heavy borders. Colour is used sparingly: brand blue only for primary buttons, links, source chips, quote rules and the "Contact person" tag. Expertise and item kinds use neutral tags, and only staleness uses amber. Rejected: brand-filled tags everywhere (too loud and less credible), pure white page (cards blur into it).
+
+## DD-22 Polish step (theme menu): Light / Dark / System added; supersedes DD-05
+
+The README's theme menu is now in the top bar (`Theme.jsx`). It is a three-button group with `aria-pressed` state and icon buttons with labels, so it stays usable at phone width. It defaults to System. Why it is worth adding now: staff share their screen or print in meetings with companies, and they may want light mode on a dark OS, or the reverse. Dark mode is class-based again, as in the template (`@custom-variant dark` on `.dark`). A small inline script in `index.html` applies the choice before the first paint, as the template does, so a reload shows no light/dark flash. The stored choice (`localStorage` key `navigator-theme`) is a per-browser convenience only. Every read and write is wrapped in try/catch: if storage is blocked, the page follows the system, and a choice made in the menu lasts for the visit. "System" removes the key, and the page listens for OS theme changes. Rejected: a dropdown menu like the template's (needs focus management for the same three choices); keeping system-only (DD-05; staff asked for the template's feel, and this menu is part of it).
+
+## DD-23 Polish step (typography): Inter 400/500/600, one type scale, tabular numbers
+
+Only the template's three weights are used: 400 body, 500 labels, buttons, kickers and tags, 600 headings and names. There is no 700; the error title is a semibold paragraph. The scale is a 15px body with relaxed leading; 12px uppercase `kicker` labels with wide tracking for section names ("Why it matches", "People and contacts", "Feedback"); 18px semibold lead names; 24–30px semibold, tight-tracked page title. `tabular-nums` is applied to the character counter, page dates and page counts, group counts, phone numbers and the build id, so figures line up. Page dates read as "3 Nov 2025" (en-GB, UTC so the date never shifts by a day).
+
+## DD-24 Polish step (motion): the template's keyframes, short, and off under reduced motion
+
+All five template keyframes are in `@theme` with the template's timings:
+- `fadeUp`: the hero, the need card, the results header, lead cards (staggered 80 ms) and quotes;
+- `pop`: source chips, delayed 150 ms after their quote;
+- `ring` + `breathe`: the logo mark while an API call runs, and the dot in the status pill;
+- `drift`: one large, blurred, low-opacity brand glow behind the top of the page (`fixed`, `pointer-events-none`, `aria-hidden`, clipped so it cannot cause horizontal scroll);
+- `pill` shadow: primary buttons, with a 2% press scale.
+
+Hover changes are 150 ms colour transitions. One global rule under `prefers-reduced-motion: reduce` turns every animation and transition off. Smooth scrolling is CSS-only (`scroll-behavior` under `no-preference`), so the scroll to the need card is instant for those users too. Animations play only on mount: after feedback re-ranks, cards keep their keys and do not replay. Rejected: the template's typing-word-by-word and shimmering "Thinking…" text (the `motion` package; a results list does not stream, and moving text reads as a gimmick to staff checking evidence).
+
+## DD-25 Polish step (loading state): the status says what Apertus is doing
+
+`run(label, fn)` now takes the sentence shown while the call runs:
+- "Apertus is drafting the need card from the business model…"
+- "Searching research units in Bern and checking each explanation against its sources…"
+- "Re-ranking the leads with your feedback…"
+
+The pill sits at the bottom of the screen (`role="status"`, so screen readers announce it), next to the pulsing logo. Buttons are disabled while it runs. Rejected: skeleton cards (the search screen stays visible during the call, and a skeleton would claim a layout the result may not have, for example no leads).
+
+## DD-26 Polish step (components): top bar, the rounded "ask" box, the pill search field
+
+These are recreated from the README. The top bar is translucent with backdrop blur and holds the compass logo mark (an inline SVG, raised with `shadow-pill`), the agency kicker (hidden on phones, where the product name wraps to two lines instead of truncating) and the theme group. The page opens with a hero block ("New enquiry" kicker, title, one-line explanation) and the template's "ask" box: a rounded-3xl white panel with `shadow-panel`, a borderless textarea, and a footer row with the character counter and the "Draft need card" pill button inside the box. Quick search is a single-line pill field with the "Search" button inside it. The need card is labelled "Drafted by Apertus" so staff know its source. Rejected: "Step n of 3" labels (quick search skips the need card, so the numbering would be wrong half the time).
+
+## DD-27 Polish step (verifiability): source chips tied to every claim; supersedes the printed address in DD-13
+
+Every claim now ends in a source chip: a small outlined pill showing the host and the last page folder (`artorg.unibe.ch › group_members`), with the full URL on hover (`title`) and "Source:" for screen readers. That is enough to tell pages apart at a glance; the full address took several lines on phones. Each quote has a brand rule on its left, the quoted sentence, then a caption row ("For: <need>" + source chip). The quote is thus visually tied to its own link, for the lead's evidence and for a person's own quote alike. The lead header shows the unit's source chip, "Page dated …", "N pages indexed" and the amber "May be outdated" badge in one row. Each person card ends with its source chip ("listed on this page"), after email, phone and "Profile".
+
+## DD-28 Polish step (hierarchy): reading order in a lead card
+
+The order is: name → parent → provenance row → "Why it matches" (explanation in larger text, needs answered, quotes) → "Fields of expertise" (now a labelled section instead of tags under the title) → "Projects, infrastructure and services" (kind as a neutral tag before each link) → "About". People sit in a soft grey side panel that keeps its content height (it no longer stretches to the card height when empty). The feedback chips sit behind a "Feedback" kicker under a rule. The results header is "Results for" + company line + coverage line in a soft panel, with the feedback message in a brand-tinted panel. Group headings carry a count badge.
+
+## DD-29 Polish step (verification)
+
+The same temporary mock outside the repo (now with a 1.5 s delay on search so the loading state can be seen) was used in Chrome. Checked:
+- light and dark themes via the new menu; System follows the OS and clears the stored key; a stored choice is applied before paint on reload;
+- the drafting and searching status pills;
+- need card, results and person cards in both themes;
+- at 390px wide (iframe), no horizontal scroll before or after results, and the title wraps instead of truncating;
+- the error card in light mode;
+- no console warnings.
+
+The built CSS contains the reduced-motion rule and the `.dark` token block. The OS reduced-motion setting itself could not be toggled from the browser tools.
