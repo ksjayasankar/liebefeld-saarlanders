@@ -13,7 +13,7 @@ from fastapi.responses import JSONResponse, Response
 from psycopg import sql
 from psycopg.types.json import Jsonb
 
-from . import apertus, db, embed, needcard, rank
+from . import apertus, db, embed, explain, needcard, rank
 from .config import env, load_domain
 from .models import (Draft, DraftRequest, FeedbackRequest, Health, Introduction, IntroductionRequest, NeedCard, SearchRequest,
                      SearchResult)
@@ -102,6 +102,7 @@ def stored(conn, request_id: uuid.UUID) -> dict:
 def result(conn, row: dict, adjust: rank.Adjust | None, message: str | None) -> SearchResult:
     card = NeedCard(**row["need_card"])
     r = rank.rank(conn, STATE["domains"][row["domain"]], card, adjust)
+    explain.explain_all(conn, r.leads)
     out = SearchResult(request_id=row["id"], domain=row["domain"], build_id=row["build_id"], card=card, groups=r.groups,
                        covered=r.covered, uncovered=r.uncovered, coverage_line=r.coverage_line, message=message)
     conn.execute("UPDATE app.requests SET leads = %s WHERE id = %s", (Jsonb(out.model_dump(mode="json")), row["id"]))

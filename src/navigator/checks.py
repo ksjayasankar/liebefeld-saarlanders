@@ -15,6 +15,8 @@ SQL_CHECKS = {
     "every URL is on a domain host, in the dataset with HTTP 200, and not gone":
         "SELECT p.url FROM pages p LEFT JOIN dataset.pages d USING (url) "
         "WHERE d.status IS DISTINCT FROM 200 OR d.gone_at IS NOT NULL OR NOT p.host = ANY(%(hosts)s)",
+    "every person's profile page was fetched with HTTP 200 and is not gone":
+        "SELECT profile_url FROM people p JOIN dataset.pages d ON d.url = p.profile_url WHERE d.status <> 200 OR d.gone_at IS NOT NULL",
     "every report sentence has a source page in the build":
         "SELECT section, position FROM report_sentences r WHERE NOT EXISTS (SELECT 1 FROM pages p WHERE p.url = r.url)",
     "no two chunks share a text":
@@ -26,7 +28,8 @@ SQL_CHECKS = {
         "SELECT id FROM build WHERE model_id <> %(model)s OR dim <> %(dim)s",
 }
 SERVED_TEXT = ["SELECT 'unit ' || id, summary FROM units", "SELECT 'chunk ' || id, text FROM chunks",
-               "SELECT 'item ' || url, name FROM unit_items", "SELECT 'report ' || section || position, sentence FROM report_sentences"]
+               "SELECT 'item ' || url, name FROM unit_items", "SELECT 'report ' || section || position, sentence FROM report_sentences",
+               "SELECT 'person ' || name, concat_ws(' ', name, titles, function, affiliation) FROM people"]   # contact data only in its own columns
 
 
 def answer_key_units() -> set[str]:

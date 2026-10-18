@@ -13,7 +13,7 @@ EVIL = '<img src="http://10.0.0.1/secret.png">'
 def result(summary: str) -> SearchResult:
     card = NeedCard(product="Glucose meter", needs=[{"id": "n1", "text": "Clinical validation of a glucose sensor"}])
     lead = Lead(unit_id="artorg-msl", name="Medical Sensing", parent="ARTORG", host="artorg.unibe.ch", category="research_partner",
-                summary=summary, need_ids=["n1"], items=[], people=[], page_date=date(2025, 1, 1), stale=False,
+                summary=summary, expertise=[], explanation=None, need_ids=["n1"], items=[], people=[], page_date=date(2025, 1, 1), stale=False,
                 url="https://www.artorg.unibe.ch/research/msl/index_eng.html", score=1.0, page_count=4,
                 reasons=[Reason(need_id="n1", need_text="Clinical validation", sentence="We validate sensors.",
                                 url="https://www.artorg.unibe.ch/research/msl/index_eng.html")])

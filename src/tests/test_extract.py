@@ -2,7 +2,7 @@ import pytest
 
 from navigator import concepts
 from navigator.config import load_domain
-from navigator.extract import member_rows, page_type, parse_html, split_name
+from navigator.extract import collect_people, page_type, parse_html, split_name
 from navigator.normalise import clean_text, match_key, sentences
 
 D = load_domain("medtech")
@@ -54,9 +54,49 @@ def test_unibe_name_order():
     assert split_name("Dr. med. Anna Beispiel") == ("Anna Beispiel", "Dr. med.")
 
 
-def test_member_rows():
-    raw = "Group Head\nName / Titel\nProf. Dr. A B\nFunktion\nGroup Head\nMail\nName / Titel\nC D\nMail\n"
-    assert member_rows(raw) == [("Prof. Dr. A B", "Group Head"), ("C D", "")]
+LIST = """<html><head><meta name="DC.Date" content="01.01.2026"></head><body><main id="content"><h1>Group Members</h1>
+<h2>Group Head</h2><article class="team-box" itemscope itemtype="http://schema.org/Person"><dl class="left">
+<dt class="sr-only">Name / Titel</dt><dd><a href="persons/prof_dr_b_a/index_eng.html">Prof. Dr. A B</a></dd>
+<dt class="sr-only">Funktion</dt><dd class="jobTitle">Group Head</dd>
+<dt class="sr-only">Mail</dt><dd class="mail"><a href="javascript:void(0)" itemprop="email">a.b@unibe.ch</a></dd></dl>
+<dl class="right"><dt>Phone</dt><dd itemprop="telephone"><a href="tel:+41 31 684 14 89">+41 31 684 14 89</a></dd></dl></article>
+<article class="team-box" itemscope itemtype="http://schema.org/Person"><dl class="left">
+<dt class="sr-only">Name / Titel</dt><dd> C D</dd><dt class="sr-only">Funktion</dt><dd class="jobTitle">PhD Student</dd></dl></article>
+<h2>Alumni</h2><article class="team-box" itemscope itemtype="http://schema.org/Person"><dl class="left">
+<dt class="sr-only">Name / Titel</dt><dd>Old Member</dd></dl></article></main></body></html>"""
+PROFILE = """<html><head><meta name="DC.Date" content="01.01.2026"></head><body><main id="content">
+<article class="team-detail" itemscope itemtype="http://schema.org/Person"><h1 itemprop="name">Prof. Dr. A B</h1>
+<p itemprop="jobTitle">Group Head</p><p>University of Bern, ARTORG Center</p>
+<dl><dt>E-Mail</dt><dd><a itemprop="email">a.b@unibe.ch</a></dd></dl></article>
+<p>Her group develops glucose sensors and runs clinical studies with the university hospital in Bern.</p></main></body></html>"""
+BASE = "https://www.artorg.unibe.ch/research/aihn/group_members/"
+
+
+def test_person_markup_on_member_list_and_own_page():
+    lst = parse_html(D, "artorg.unibe.ch", BASE + "index_eng.html", LIST)
+    assert [(e["name"], e["function"], e["email"], e["phone"]) for e in lst.people] == [
+        ("Prof. Dr. A B", "Group Head", "a.b@unibe.ch", "+41 31 684 14 89"), ("C D", "PhD Student", None, None)]
+    assert lst.people[0]["profile_url"] == BASE + "persons/prof_dr_b_a/index_eng.html" and not lst.people[0]["own_page"]
+    own = parse_html(D, "artorg.unibe.ch", BASE + "persons/prof_dr_b_a/index_eng.html", PROFILE)
+    assert own.people[0]["own_page"] and own.people[0]["affiliation"] == "University of Bern, ARTORG Center"
+    assert "@" not in own.text
+
+
+def test_collect_people_merges_own_page_into_list_entry():
+    lst = parse_html(D, "artorg.unibe.ch", BASE + "index_eng.html", LIST)
+    own = parse_html(D, "artorg.unibe.ch", BASE + "persons/prof_dr_b_a/index_eng.html", PROFILE)
+    lst.unit_id, own.unit_id = "artorg-aihn", "artorg"
+    rows = collect_people([own, lst], {"artorg-aihn": "AIHN", "artorg": "ARTORG"}, {own.url, lst.url})
+    assert [(r["unit_id"], r["name"], r["titles"], r["affiliation"], r["contact"]) for r in rows] == [
+        ("artorg-aihn", "A B", "Prof. Dr.", "University of Bern, ARTORG Center", True), ("artorg-aihn", "C D", "", "AIHN", False)]
+    assert [r["position"] for r in rows] == [0, 1]
+    assert rows[0]["profile_url"] == own.url and rows[0]["source_url"] == lst.url
+
+
+def test_profile_link_kept_only_when_fetched():
+    lst = parse_html(D, "artorg.unibe.ch", BASE + "index_eng.html", LIST)
+    lst.unit_id = "artorg-aihn"
+    assert collect_people([lst], {"artorg-aihn": "AIHN"}, {lst.url})[0]["profile_url"] is None
 
 
 def test_concept_tag_longest_first():

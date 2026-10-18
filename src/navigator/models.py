@@ -67,6 +67,19 @@ class Item(Strict):
     url: str
 
 
+class Person(Strict):
+    name: str
+    titles: str                           # "Prof. Dr.", as written on the page
+    function: str | None                  # job title as written on the page
+    affiliation: str                      # the unit, or the line under the name on the person's own page
+    email: str | None
+    phone: str | None
+    profile_url: str | None               # the person's own page, when the site has one
+    source_url: str                       # the page this entry is read from
+    contact: bool                         # leads the unit (head, director, PI): the person to approach first
+    reason: Reason | None                 # quoted from the person's own page, when it matches a need
+
+
 class Lead(Strict):
     unit_id: str
     name: str
@@ -74,10 +87,12 @@ class Lead(Strict):
     host: str
     category: Category
     summary: str
+    expertise: list[str]                  # the unit's terms (English), from its own pages
+    explanation: str | None               # one sentence on why the lead matches, supported by the quoted reasons
     need_ids: list[str]
     reasons: list[Reason]
-    items: list[Item]
-    people: list[str]                     # empty while SHOW_NAMES=false
+    items: list[Item]                     # projects and facilities
+    people: list[Person]                  # contact persons first, then people whose own page matches a need
     page_date: date | None
     stale: bool                           # page older than three years
     url: str

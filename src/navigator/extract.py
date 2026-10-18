@@ -4,13 +4,13 @@ import json
 import re
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
-from urllib.parse import urlsplit
+from urllib.parse import urljoin, urlsplit
 
 from bs4 import BeautifulSoup
 
 from .config import LANGS, ROOT, Domain, Template, load_yaml
 from .fetch import normalise_url
-from .normalise import AI_ADDRESSED, clean_text, words
+from .normalise import AI_ADDRESSED, EMAIL, PHONE, clean_text, match_key, words
 
 BLOCKS = ["p", "li", "h1", "h2", "h3", "h4", "h5", "h6", "td", "th", "dt", "dd", "div", "section", "article",
           "aside", "tr", "address", "blockquote", "figcaption", "br"]
@@ -18,6 +18,8 @@ LANG_SUFFIX = {"_eng": "en", "_ger": "de", "_fra": "fr"}
 TITLES = {"prof.", "em.", "dr.", "pd", "med.", "phil.", "nat.", "rer.", "dent.", "vet.", "sc.", "techn.", "habil.",
           "pharm.", "jur.", "oec.", "hist.", "dipl.", "ing.", "msc", "phd", "md", "mba", "bsc", "dr", "prof"}
 MIN_WORDS = 30  # a page with less content carries no evidence
+LEAD_ROLE = re.compile(r"head|director|leader|principal investigator|\bPI\b|leiter|direktor", re.I)   # contact person (D-26)
+PERSON = '[itemtype$="schema.org/Person"]'
 
 
 @dataclass
@@ -33,7 +35,7 @@ class Page:
     unit_id: str = ""
     translation_of: str | None = None
     lang_links: list[str] = field(default_factory=list)
-    people: list[tuple[str, str]] = field(default_factory=list)   # (name as written, role) from member lists
+    people: list[dict] = field(default_factory=list)   # schema.org Person entries on the page (D-26)
 
 
 @dataclass
@@ -75,11 +77,29 @@ def cut_alumni(text: str, headings: list[str]) -> str:
     return "\n".join(lines[:cut])
 
 
-def member_rows(text: str) -> list[tuple[str, str]]:
-    lines = [line.strip() for line in text.splitlines() if line.strip()]
-    names = [i + 1 for i, line in enumerate(lines[:-1]) if line in ("Name / Titel", "Name / Title")]
-    role = lambda i: next((lines[j + 1] for j in range(i, min(i + 4, len(lines) - 1)) if lines[j] in ("Funktion", "Function")), "")
-    return [(lines[i], role(i)) for i in names]
+def person_entries(main, url: str, alumni_headings: list[str]) -> list[dict]:
+    """schema.org Person markup: a `team-box` on a member list (name, function, link to the person's page) or the
+    `team-detail` block of the person's own page (name, function, affiliation line). Entries after an alumni heading are left out."""
+    cut = next((h for h in main.find_all(["h1", "h2", "h3", "h4"]) if h.get_text(strip=True) in alumni_headings), None)
+    after = {id(el) for el in cut.find_all_next()} if cut else set()
+    text = lambda el: el and (" ".join(el.get_text(" ").split()) or None)
+    found = lambda rx, el: (m := el and re.search(rx, el.get_text(" "))) and m.group(0)
+    out = []
+    for art in main.select(PERSON):
+        if id(art) in after:
+            continue
+        if "team-detail" in art.get("class", []):
+            name, job = art.select_one("[itemprop=name]"), art.select_one("[itemprop=jobTitle]")
+            aff, link = (job or name).find_next_sibling("p", itemprop=False), url
+        else:
+            label = art.find("dt", string=re.compile(r"^\s*Name / Tit(?:el|le)\s*$"))
+            name, job, aff = label and label.find_next_sibling("dd"), art.select_one(".jobTitle"), None
+            a = name and name.find("a", href=True)
+            link = a and normalise_url(urljoin(url, a["href"]))
+        out.append(dict(name=text(name) or "", function=text(job), affiliation=text(aff), profile_url=link,
+                        email=found(EMAIL, art.select_one("[itemprop=email]")), phone=found(PHONE, art.select_one("[itemprop=telephone]")),
+                        own_page=link == url))
+    return out
 
 
 def parse_html(domain: Domain, host: str, url: str, html: str) -> Page | None:
@@ -106,7 +126,7 @@ def parse_html(domain: Domain, host: str, url: str, html: str) -> Page | None:
     ptype = page_type(t, path)
     return Page(url, host, lang, ptype, title, date and datetime.strptime(date["content"], "%d.%m.%Y").date().isoformat(),
                 text, hashlib.sha256(text.encode()).hexdigest(), lang_links=[u for u in switch if u != url],
-                people=member_rows(raw) if ptype == "members" else [])
+                people=person_entries(main, url, t.alumni_headings))
 
 
 def parse_wordpress(domain: Domain, host: str, url: str, item: dict) -> Page:
@@ -178,6 +198,34 @@ def flagged_check(pages: list[Page]) -> list[Page]:
     return [p for p in pages if p.url not in cfg["excluded"]]
 
 
+def collect_people(pages: list[Page], unit_names: dict[str, str], fetched: set[str]) -> list[dict]:
+    """One row per person and unit. Member lists come first, so a person belongs to the group that lists them;
+    their own page adds what the list lacks. English pages first, so English profile links win. A profile link
+    is kept only for a page fetched with HTTP 200, so every link shown is checked (D-26)."""
+    rows: dict[tuple[str, str], dict] = {}
+    by_profile: dict[str, list[dict]] = {}
+    for p in sorted(pages, key=lambda p: (any(e["own_page"] for e in p.people), p.lang != "en", p.url)):
+        for e in p.people:
+            name, titles = split_name(e["name"])
+            if not name:   # the source page lists titles in the name field (D-20)
+                print(f"person entry without a name, left out: {e['name']!r} on {p.url}")
+                continue
+            profile = e["profile_url"] if e["profile_url"] in fetched else None
+            new = dict(unit_id=p.unit_id, name=name, titles=titles, function=e["function"] and clean_text(e["function"]),
+                       affiliation=e["affiliation"] and clean_text(e["affiliation"]), email=e["email"], phone=e["phone"],
+                       profile_url=profile, source_url=p.url)
+            listed = e["own_page"] and by_profile.get(profile) or [rows.setdefault((p.unit_id, match_key(name)), new)]
+            if profile and not e["own_page"]:
+                by_profile.setdefault(profile, []).append(listed[0])
+            for r in listed:
+                r.update({k: v for k, v in new.items() if r[k] is None and v is not None})
+    for i, r in enumerate(rows.values()):   # position: order on the member list, where the head comes first
+        r["position"] = i
+        r["affiliation"] = r["affiliation"] or unit_names[r["unit_id"]]
+        r["contact"] = bool(r["function"] and LEAD_ROLE.search(r["function"]))
+    return list(rows.values())
+
+
 def load_pages(conn, domain: Domain) -> list[Page]:
     hosts = {h.name: domain.templates[h.template] for h in domain.hosts}
     rows = conn.execute("SELECT url, host, raw_path FROM dataset.pages WHERE status = 200 AND gone_at IS NULL "
@@ -197,12 +245,8 @@ def run(conn, domain: Domain) -> dict:
     english = {p.url for p in pages if p.lang == "en"}
     for p in pages:   # a German or French page points to its English version (spec 5.2)
         p.translation_of = next((u for u in p.lang_links if u in english), None) if p.lang != "en" else None
-    people = [dict(unit_id=p.unit_id, first_last=n, titles=t, role=role, url=p.url)
-              for p in pages for written, role in p.people for n, t in [split_name(written)] if n]
-    for p in pages:   # the source page lists titles in the name field (D-20)
-        for written, _ in p.people:
-            if not split_name(written)[0]:
-                print(f"member row without a name, left out: {written!r} on {p.url}")
+    people = collect_people(pages, {u.id: u.name for u in units}, {r["url"] for r in conn.execute(
+        "SELECT url FROM dataset.pages WHERE status = 200 AND gone_at IS NULL")})
     items = [dict(unit_id=p.unit_id, kind=p.page_type, name=p.title, url=p.url)
              for p in pages if p.page_type in ("project", "facility")]
     out = {"pages": [asdict(p) for p in pages], "units": [asdict(u) for u in units], "people": people, "items": items}

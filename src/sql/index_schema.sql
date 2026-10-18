@@ -5,6 +5,7 @@ CREATE TABLE units    (id text PRIMARY KEY, name text NOT NULL, kind text NOT NU
                        parent_id text REFERENCES units(id), host text NOT NULL,
                        category text NOT NULL CHECK (category IN ('research_partner','facility','clinical_validation','licensing','support','talent')),
                        summary text NOT NULL CHECK (summary <> ''), summary_sources text[] NOT NULL CHECK (cardinality(summary_sources) > 0),
+                       terms text[] NOT NULL,                   -- English terms from enrichment: the unit's fields of expertise
                        page_count int NOT NULL CHECK (page_count > 0), embedding vector(1024) NOT NULL);
 CREATE TABLE pages    (url text PRIMARY KEY, host text NOT NULL, lang text NOT NULL CHECK (lang IN ('en','de','fr')),
                        page_type text NOT NULL, title text NOT NULL, page_date date,
@@ -14,8 +15,11 @@ CREATE TABLE unit_pages (unit_id text REFERENCES units(id), url text REFERENCES 
 CREATE TABLE unit_items (unit_id text NOT NULL REFERENCES units(id),
                          kind text NOT NULL CHECK (kind IN ('project', 'facility')),
                          name text NOT NULL, url text NOT NULL REFERENCES pages(url));
-CREATE TABLE people   (unit_id text NOT NULL REFERENCES units(id), first_last text NOT NULL,
-                       titles text NOT NULL, role text NOT NULL, url text NOT NULL REFERENCES pages(url));
+CREATE TABLE people   (unit_id text NOT NULL REFERENCES units(id), name text NOT NULL, titles text NOT NULL,
+                       function text, affiliation text NOT NULL, email text, phone text,   -- contact data lives only here (D-26)
+                       profile_url text REFERENCES dataset.pages(url), source_url text NOT NULL REFERENCES pages(url),
+                       contact boolean NOT NULL, position int NOT NULL);
+CREATE INDEX ON people (unit_id);
 CREATE TABLE chunks   (id text PRIMARY KEY, unit_id text NOT NULL REFERENCES units(id),
                        url text REFERENCES pages(url),          -- NULL only for a unit's term chunk
                        lang text NOT NULL, text text NOT NULL, is_terms boolean NOT NULL,

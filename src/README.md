@@ -1,12 +1,16 @@
 # Research & Expertise Navigator
 
-Helps a company looking at Bern find research groups, facilities and support programmes at the University of Bern and the Diabetes Center Berne. Built for the Hack Apertus challenge of the Bern Economic Development Agency. Every lead quotes the public page it comes from; introductions go through the agency.
+A workspace for the Bern Economic Development Agency. A company considering Bern sends its business model; agency staff paste it, confirm the need card Apertus drafts, and get potential collaborators at the University of Bern and the Diabetes Center Berne: research groups, people and contact persons with their functions, expertise, projects and infrastructure. Every claim quotes and links the public page it comes from. Built for the Hack Apertus challenge.
+
+The tool shows contact data collected from public pages and has no login yet: run it only where agency staff alone can reach it.
 
 - `plan.md`: the specification.
 - `docs/superpowers/plans/2026-10-18-navigator.md`: the implementation plan.
 - `flow.md`: the end-to-end flow and the code that implements each step.
 - `decision.md`: decisions taken while building.
 - `issues.md`: problems met and how they were solved.
+- `design_decisions.md`: front-end design decisions.
+- `structure.md`: what each folder and file does.
 
 ## Run it
 

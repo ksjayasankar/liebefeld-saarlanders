@@ -53,13 +53,15 @@ def build(conn, domain: Domain, extracted: dict, enrichment: dict, report: list[
         cur.executemany("INSERT INTO pages VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
                         [(p["url"], p["host"], p["lang"], p["page_type"], p["title"], p["page_date"], p["text_hash"],
                           p["translation_of"]) for p in sorted(pages, key=lambda p: p["translation_of"] is not None)])
-        cur.executemany("INSERT INTO units VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+        cur.executemany("INSERT INTO units VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
                         [(u["id"], u["name"], u["kind"], u["parent_id"], u["host"], enrichment[u["id"]]["category"],
-                          enrichment[u["id"]]["summary"], enrichment[u["id"]]["summary_sources"], page_count[u["id"]],
+                          enrichment[u["id"]]["summary"], enrichment[u["id"]]["summary_sources"],
+                          enrichment[u["id"]]["terms"]["en"], page_count[u["id"]],
                           unit_vec[u["id"]]) for u in sorted(units, key=lambda u: u["parent_id"] is not None)])
         cur.executemany("INSERT INTO unit_pages VALUES (%s,%s)", [(p["unit_id"], p["url"]) for p in pages])
         cur.executemany("INSERT INTO unit_items VALUES (%(unit_id)s,%(kind)s,%(name)s,%(url)s)", extracted["items"])
-        cur.executemany("INSERT INTO people VALUES (%(unit_id)s,%(first_last)s,%(titles)s,%(role)s,%(url)s)", extracted["people"])
+        cur.executemany("INSERT INTO people VALUES (%(unit_id)s,%(name)s,%(titles)s,%(function)s,%(affiliation)s,%(email)s,"
+                        "%(phone)s,%(profile_url)s,%(source_url)s,%(contact)s,%(position)s)", extracted["people"])
         cur.executemany("INSERT INTO chunks VALUES (%s,%s,%s,%s,%s,%s,to_tsvector(%s::regconfig,%s),%s)",
                         [(c["id"], c["unit_id"], c["url"], c["lang"], c["text"], c["is_terms"], STEMMER[c["lang"]], c["text"], v)
                          for c, v in zip(chunks, vectors)])

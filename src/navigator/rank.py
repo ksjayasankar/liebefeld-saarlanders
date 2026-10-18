@@ -7,7 +7,7 @@ from psycopg import sql
 
 from . import apertus, concepts, embed
 from .config import Domain, env
-from .models import CATEGORY_LABELS, Item, Lead, LeadGroup, NeedCard, Reason
+from .models import CATEGORY_LABELS, Item, Lead, LeadGroup, NeedCard, Person, Reason
 from .normalise import sentences
 
 POOL, RRF_K, CONCEPT_BOOST, BEST_CHUNKS = 200, 60, 0.01, 3
@@ -16,6 +16,8 @@ CANDIDATE_SHARE = 0.05  # a unit is a candidate if its best page chunk reaches t
 COVER = 0.8   # coverage probability of a unit scored 1: the best unit leaves 20% of a need open, so relevance keeps ordering
 LIKE, DISLIKE = 0.75, 0.15
 STALE_AFTER = timedelta(days=3 * 365)
+CONTACTS, PEOPLE, PERSON_SHARE = 3, 6, 0.5   # a person's own page matches a need if a sentence scores half the lead's best chunk
+PERSON_PAGES = 5   # per need and lead, the person pages closest to the need go to the reranker
 STEMMERS = ("english", "german", "french")
 EXPAND_SYSTEM = "List the words researchers and companies use for this need, including abbreviations and everyday words."
 EXPAND_INSTRUCTION = 'Need: the quoted line [1]\nReturn: {"en": [...], "de": [...], "fr": [...]}\nGive 5 to 15 terms per language, each 1 to 4 words.'
@@ -85,7 +87,7 @@ def rank(conn, domain: Domain, card: NeedCard, adjust: Adjust | None = None) -> 
     labels = conn.execute("SELECT concept_id, match_key FROM concept_labels").fetchall()
     idx = concepts.index(labels)
     unit_rows = {r["id"]: r for r in conn.execute(
-        "SELECT u.id, u.name, p.name AS parent, u.host, u.kind, u.category, u.summary, u.page_count, u.embedding "
+        "SELECT u.id, u.name, p.name AS parent, u.host, u.kind, u.category, u.summary, u.terms, u.page_count, u.embedding "
         "FROM units u LEFT JOIN units p ON p.id = u.parent_id")}
     need_vecs = embed.cached(conn, [n.text for n in card.needs])
     unit_scores: dict[str, dict[str, float]] = {}   # need id -> unit id -> score (scaled 0..1)
@@ -124,7 +126,7 @@ def rank(conn, domain: Domain, card: NeedCard, adjust: Adjust | None = None) -> 
         scores = np.array([[unit_scores[n.id].get(u, 0.0) for n in card.needs] for u in units])
         vecs = np.stack([unit_rows[u]["embedding"].to_numpy() for u in units])
         picked = select(scores, vecs @ vecs.T, np.array([unit_rows[u]["page_count"] for u in units]), SHORTLIST)
-        leads = [_lead(conn, card, unit_rows[units[i]], best_chunk, scores[i]) for i in picked]
+        leads = [_lead(conn, card, unit_rows[units[i]], best_chunk, scores[i], need_vecs) for i in picked]
         leads = [l for l in leads if not (adjust.hide_stale and l.stale)]
     threshold = domain.coverage_threshold
     covered = [n.id for n in card.needs if raw_best[n.id] >= threshold]
@@ -141,25 +143,52 @@ def _mean(unit_rows: dict, unit_ids: list[str] | None, like: np.ndarray) -> np.n
     return np.mean([unit_rows[u]["embedding"].to_numpy() for u in unit_ids], axis=0) if unit_ids else np.zeros_like(like)
 
 
-def _lead(conn, card: NeedCard, unit: dict, best_chunk: dict, score_row: np.ndarray) -> Lead:
+def _quote(need, text: str, url: str) -> Reason:
+    """The sentence of a chunk (title line left out) that the reranker finds closest to the need."""
+    body = sentences(text.split("\n", 1)[-1]) or [text]
+    return Reason(need_id=need.id, need_text=need.text, sentence=body[int(np.argmax(embed.rerank(need.text, body)))], url=url)
+
+
+def _bio(text: str) -> list[str]:
+    """Full sentences of a person's page: headings such as the group name are no evidence about the person."""
+    return [s for s in sentences(text.split("\n", 1)[-1]) if len(s.split()) >= 6 and s[-1] in ".!?"]
+
+
+def _people(conn, card: NeedCard, unit_id: str, best_chunk: dict, need_vecs: list) -> list[Person]:
+    """Contact persons first (in list order), then people whose own page has a sentence matching a need: per need, the
+    full sentences of the closest person pages are reranked against the lead's best chunk score (D-26)."""
+    rows = conn.execute("SELECT * FROM people WHERE unit_id = %s ORDER BY position", (unit_id,)).fetchall()
+    reason: dict[str, tuple[float, Reason]] = {}
+    for need, v in zip(card.needs, need_vecs):
+        if (need.id, unit_id) not in best_chunk:
+            continue
+        hits = conn.execute("SELECT url, text FROM (SELECT DISTINCT ON (url) url, text, embedding <=> %s AS d FROM chunks "
+                            "WHERE url = ANY(%s) ORDER BY url, d) c ORDER BY d LIMIT %s",
+                            (v, [r["profile_url"] for r in rows if r["profile_url"]], PERSON_PAGES)).fetchall()
+        bio = [(h["url"], s) for h in hits for s in _bio(h["text"])]
+        for (url, sentence), s in zip(bio, embed.rerank(need.text, [s for _, s in bio]) if bio else []):
+            if s >= PERSON_SHARE * best_chunk[(need.id, unit_id)][0] and s > reason.get(url, (-1.0,))[0]:
+                reason[url] = (float(s), Reason(need_id=need.id, need_text=need.text, sentence=sentence, url=url))
+    score = lambda r: reason.get(r["profile_url"], (0.0,))[0]
+    contacts = [r for r in rows if r["contact"]][:CONTACTS]
+    matched = sorted((r for r in rows if r["profile_url"] in reason and r not in contacts), key=score, reverse=True)
+    return [Person(**{k: r[k] for k in ("name", "titles", "function", "affiliation", "email", "phone", "profile_url", "source_url", "contact")},
+                   reason=reason.get(r["profile_url"], (0.0, None))[1]) for r in (contacts + matched)[:PEOPLE]]
+
+
+def _lead(conn, card: NeedCard, unit: dict, best_chunk: dict, score_row: np.ndarray, need_vecs: list) -> Lead:
     reasons, dates = [], []
     for need in card.needs:
         if (need.id, unit["id"]) not in best_chunk:
             continue
         chunk = conn.execute("SELECT c.text, c.url, p.page_date FROM chunks c JOIN pages p USING (url) WHERE c.id = %s",
                              (best_chunk[(need.id, unit["id"])][1],)).fetchone()
-        body = sentences(chunk["text"].split("\n", 1)[-1]) or [chunk["text"]]
-        sentence = body[int(np.argmax(embed.rerank(need.text, body)))]
-        reasons.append(Reason(need_id=need.id, need_text=need.text, sentence=sentence, url=chunk["url"]))
+        reasons.append(_quote(need, chunk["text"], chunk["url"]))
         dates.append(chunk["page_date"])
     items = conn.execute("SELECT kind, name, url FROM unit_items WHERE unit_id = %s ORDER BY kind, name LIMIT 5", (unit["id"],)).fetchall()
-    show = env("SHOW_NAMES")
-    assert show in ("true", "false"), "SHOW_NAMES must be true or false"
-    people = [r["first_last"] for r in conn.execute("SELECT first_last FROM people WHERE unit_id = %s ORDER BY first_last LIMIT 5",
-                                                    (unit["id"],))] if show == "true" else []
     page_date = max((d for d in dates if d), default=None)
     return Lead(unit_id=unit["id"], name=unit["name"], parent=unit["parent"], host=unit["host"], category=unit["category"],
-                summary=unit["summary"], need_ids=[r.need_id for r in reasons], reasons=reasons,
-                items=[Item(**r) for r in items], people=people, page_date=page_date,
+                summary=unit["summary"], expertise=unit["terms"], explanation=None, need_ids=[r.need_id for r in reasons], reasons=reasons,
+                items=[Item(**r) for r in items], people=_people(conn, card, unit["id"], best_chunk, need_vecs), page_date=page_date,
                 stale=bool(page_date and date.today() - page_date > STALE_AFTER), url=reasons[0].url,
                 score=round(float(score_row.sum()), 4), page_count=unit["page_count"])
