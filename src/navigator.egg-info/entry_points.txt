@@ -1,2 +1,0 @@
-[console_scripts]
-navigator = navigator.cli:main
