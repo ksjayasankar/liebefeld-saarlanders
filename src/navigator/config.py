@@ -61,6 +61,7 @@ class Domain(Strict):
     templates: dict[str, Template]
     hosts: list[Host]
     vocabularies: list[str]
+    coverage_threshold: float        # best reranker score below which a need counts as uncovered (tuned on the answer key)
     report_sections: dict[str, ReportSection]
     report_banned: list[str]         # promotional words, comparisons, other cantons and cities
     test_set: str

@@ -64,6 +64,7 @@ hosts:
   - {label: "Neuroscience Bern", url: "https://www.neuroscience.unibe.ch/", template: unibe_portal, priority: 3}
   - {label: "Abteilung Veterinär-Anatomie", url: "https://www.ita.vetsuisse.unibe.ch/", template: unibe_portal, priority: 3}
 vocabularies: []                 # vocab/synonyms.json once supplied (decision D-08)
+coverage_threshold: 0.2          # starting value; tune on the development queries
 report_sections:                 # public report pages, written by Apertus 70B with a source per sentence (spec 5.8)
   clinical_validation:
     title: Clinical studies and validation in Bern
