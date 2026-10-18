@@ -1,4 +1,6 @@
-"""navigator migrate | gateway-check | fetch [--refresh] | snapshot export|import | extract | enrich | embed | load | check | index | eval"""
+"""navigator migrate | gateway-check | fetch [--refresh] | snapshot export|import | extract | enrich | embed | report | load | check | index | eval
+
+`check` runs the build checks on staging_<domain> and, when they pass, makes it live."""
 import argparse
 import asyncio
 import importlib
@@ -13,7 +15,7 @@ def main():
     sub = p.add_subparsers(dest="cmd", required=True)
     sub.add_parser("migrate")
     sub.add_parser("gateway-check")
-    for name in ("fetch", "extract", "enrich", "embed", "load", "check", "index", "eval"):
+    for name in ("fetch", "extract", "enrich", "embed", "report", "load", "check", "index", "eval"):
         s = sub.add_parser(name)
         s.add_argument("--domain", required=True)
         if name == "fetch":

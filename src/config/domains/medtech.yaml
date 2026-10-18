@@ -64,6 +64,23 @@ hosts:
   - {label: "Neuroscience Bern", url: "https://www.neuroscience.unibe.ch/", template: unibe_portal, priority: 3}
   - {label: "Abteilung Veterinär-Anatomie", url: "https://www.ita.vetsuisse.unibe.ch/", template: unibe_portal, priority: 3}
 vocabularies: []                 # vocab/synonyms.json once supplied (decision D-08)
-report_sections: [clinical_validation, regulatory_route]
-report_sources: []
+report_sections:                 # public report pages, written by Apertus 70B with a source per sentence (spec 5.8)
+  clinical_validation:
+    title: Clinical studies and validation in Bern
+    brief: Where a medical technology company in Bern can run or prepare clinical studies and validate a device, and which services exist for that.
+    sources:
+      - https://www.dcberne.com/en/offering/
+      - https://www.artorg.unibe.ch/services/clinical_research_database/index_eng.html
+      - https://www.dbmr.unibe.ch/research/research_programs/index_eng.html
+  regulatory_route:
+    title: Regulatory route and translation support
+    brief: What the public sources say about bringing a medical device to market, regulatory steps, and support for translation and start-ups in Bern.
+    sources:
+      - https://www.dcberne.com/en/dcb-newsletter-8-23-inside-dcb-understanding-the-regulatory-landscape/
+      - https://www.artorg.unibe.ch/studies/entrepreneurial_classes_sitem_insel_school/index_eng.html
+      - https://mediarelations.unibe.ch/media_releases/2025/media_releases_2025/innosuisse_flagship_initiatives/index_eng.html
+report_banned: [world-class, world-leading, leading, best, unique, excellent, renowned, outstanding, cutting-edge,
+  state-of-the-art, unrivalled, premier, better than, compared to, Zurich, Zürich, Geneva, Genève, Basel, Lausanne,
+  Lucerne, Luzern, St. Gallen, Lugano, Winterthur, Aargau, Vaud, Ticino, Valais, Neuchâtel, Fribourg, Solothurn, Zug,
+  Schwyz, Thurgau, Graubünden, Jura]
 test_set: eval/

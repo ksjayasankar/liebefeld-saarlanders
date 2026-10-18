@@ -47,6 +47,12 @@ class Host(Strict):
         return urlsplit(self.url).netloc.lower().removeprefix("www.")
 
 
+class ReportSection(Strict):
+    title: str
+    brief: str                       # what the section tells a company, given to Apertus
+    sources: list[str]               # public pages the section is written from
+
+
 class Domain(Strict):
     id: str
     label: str
@@ -55,8 +61,8 @@ class Domain(Strict):
     templates: dict[str, Template]
     hosts: list[Host]
     vocabularies: list[str]
-    report_sections: list[str]
-    report_sources: list[str]
+    report_sections: dict[str, ReportSection]
+    report_banned: list[str]         # promotional words, comparisons, other cantons and cities
     test_set: str
 
     def host(self, name: str) -> Host:
@@ -81,8 +87,10 @@ def load_domain(domain_id: str) -> Domain:
     for p in [*d.vocabularies, d.test_set]:
         assert (ROOT / p).exists(), f"missing path {p}"
     hosts = {h.name for h in d.hosts}
-    for u in d.report_sources:
-        assert urlsplit(u).netloc.lower().removeprefix("www.") in hosts, f"report source {u} not on a domain host"
+    for name, sec in d.report_sections.items():
+        assert sec.sources, f"report section {name} has no sources"
+        for u in sec.sources:
+            assert urlsplit(u).netloc.lower().removeprefix("www.") in hosts, f"report source {u} not on a domain host"
     return d
 
 
