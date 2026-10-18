@@ -6,49 +6,63 @@ max_pages_per_host: 1500
 templates:
   unibe_portal:                  # the shared UniBE web system
     main: "main#content"
-    drop: []
+    skip_without: "main"         # folder and link-list pages have no <main> at all
+    drop: ["aside.contact-box", ".social-share", ".mdl-teaser_element", ".modal"]
+    unit_paths:                  # /research/<code>/ is a unit; listing folders are not
+      - "^/(?:research|forschung)/(?:platforms/|plattformen/|research_groups/|forschungsgruppen/|groups/|gruppen/)?(?!(?:publications|publikationen|projects|projekte|topics|themen|news|jobs|platforms|plattformen|research_groups|forschungsgruppen|groups|gruppen)/)([a-z0-9_]+)/"
+    page_types:
+      members: "/(?:group_members|team|mitarbeitende|people|personen)/index_(?:eng|ger|fra)\\.html$"
+      person: "/(?:persons|staff|personen|group_members|team|mitarbeitende|people)/"
+      facility: "/(?:services|dienstleistungen|platforms|plattformen|core_facilities)/"
+      project: "/(?:projects|projekte|research_activities|forschungsaktivitaeten)/"
+      news: "/(?:news|news_and_events|aktuell|medienmitteilungen|media_releases)/"
+      other: ".*"
     alumni_headings: ["Alumni", "Former members", "Former Members", "Ehemalige", "Ehemalige Mitarbeitende"]
   wordpress:
     wp_api: /wp-json/wp/v2/
+    wp_types: [project, pages, posts]   # publication posts carry no content
+    page_types: {project: "^project$", news: "^post$", other: ".*"}
+    strip_patterns: ["\\[/?et_pb_[^\\]]*\\]"]   # Divi page-builder shortcodes
 hosts:
-  - {url: "https://www.dcberne.com/", template: wordpress, priority: 1}
-  - {url: "https://www.artorg.unibe.ch/", template: unibe_portal, priority: 1}
-  - {url: "https://mediarelations.unibe.ch/", template: unibe_portal, priority: 2}
-  - {url: "https://www.medizin.unibe.ch/", template: unibe_portal, priority: 2}
-  - {url: "https://www.aiub.unibe.ch/", template: unibe_portal, priority: 2}
-  - {url: "https://www.phinst.unibe.ch/", template: unibe_portal, priority: 2}
-  - {url: "https://www.izb.unibe.ch/", template: unibe_portal, priority: 2}
-  - {url: "https://www.cde.unibe.ch/", template: unibe_portal, priority: 2}
-  - {url: "https://www.oeschger.unibe.ch/", template: unibe_portal, priority: 2}
-  - {url: "https://www.bcpm.unibe.ch/", template: unibe_portal, priority: 2}
-  - {url: "https://www.dbmr.unibe.ch/", template: unibe_portal, priority: 2}
-  - {url: "https://www.ngs.unibe.ch/", template: unibe_portal, priority: 2}
-  - {url: "https://www.img.unibe.ch/", template: unibe_portal, priority: 2}
-  - {url: "https://www.philnat.unibe.ch/", template: unibe_portal, priority: 3}
-  - {url: "https://www.vetsuisse.unibe.ch/", template: unibe_portal, priority: 3}
-  - {url: "https://www.soz.unibe.ch/", template: unibe_portal, priority: 3}
-  - {url: "https://www.psy.unibe.ch/", template: unibe_portal, priority: 3}
-  - {url: "https://www.math.unibe.ch/", template: unibe_portal, priority: 3}
-  - {url: "https://www.physik.unibe.ch/", template: unibe_portal, priority: 3}
-  - {url: "https://www.biology.unibe.ch/", template: unibe_portal, priority: 3}
-  - {url: "https://www.iee.unibe.ch/", template: unibe_portal, priority: 3}
-  - {url: "https://www.ips.unibe.ch/", template: unibe_portal, priority: 3}
-  - {url: "https://www.geo.unibe.ch/", template: unibe_portal, priority: 3}
-  - {url: "https://www.tki.unibe.ch/", template: unibe_portal, priority: 3}
-  - {url: "https://www.irm.unibe.ch/", template: unibe_portal, priority: 3}
-  - {url: "https://www.ifik.unibe.ch/", template: unibe_portal, priority: 3}
-  - {url: "https://www.ispm.unibe.ch/", template: unibe_portal, priority: 3}
-  - {url: "https://www.ikim.unibe.ch/", template: unibe_portal, priority: 3}
-  - {url: "https://www.ibmm.unibe.ch/", template: unibe_portal, priority: 3}
-  - {url: "https://www.pki.unibe.ch/", template: unibe_portal, priority: 3}
-  - {url: "https://www.inf.unibe.ch/", template: unibe_portal, priority: 3}
-  - {url: "https://www.itp.unibe.ch/", template: unibe_portal, priority: 3}
-  - {url: "https://www.iap.unibe.ch/", template: unibe_portal, priority: 3}
-  - {url: "https://www.dcbp.unibe.ch/", template: unibe_portal, priority: 3}
-  - {url: "https://www.csh.unibe.ch/", template: unibe_portal, priority: 3}
-  - {url: "https://www.mic.unibe.ch/", template: unibe_portal, priority: 3}
-  - {url: "https://www.neuroscience.unibe.ch/", template: unibe_portal, priority: 3}
-  - {url: "https://www.ita.vetsuisse.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Diabetes Center Berne (DCB)", url: "https://www.dcberne.com/", template: wordpress, priority: 1}
+  - {label: "ARTORG Center for Biomedical Engineering Research", url: "https://www.artorg.unibe.ch/", template: unibe_portal, priority: 1}
+  - {label: "Media Relations, University of Bern", url: "https://mediarelations.unibe.ch/", template: unibe_portal, priority: 2}
+  - {label: "Faculty of Medicine", url: "https://www.medizin.unibe.ch/", template: unibe_portal, priority: 2}
+  - {label: "Astronomical Institute", url: "https://www.aiub.unibe.ch/", template: unibe_portal, priority: 2}
+  - {label: "Physikalisches Institut", url: "https://www.phinst.unibe.ch/", template: unibe_portal, priority: 2}
+  - {label: "Institute of Cell Biology", url: "https://www.izb.unibe.ch/", template: unibe_portal, priority: 2}
+  - {label: "Centre for Development and Environment (CDE)", url: "https://www.cde.unibe.ch/", template: unibe_portal, priority: 2}
+  - {label: "Oeschger Centre for Climate Change Research (OCCR)", url: "https://www.oeschger.unibe.ch/", template: unibe_portal, priority: 2}
+  - {label: "Bern Center for Precision Medicine (BCPM)", url: "https://www.bcpm.unibe.ch/", template: unibe_portal, priority: 2}
+  - {label: "Department for BioMedical Research DBMR", url: "https://www.dbmr.unibe.ch/", template: unibe_portal, priority: 2,
+     unit_paths: ["^/(?:research|forschung)/(?:research_programs|forschungsprogramme)/([a-z0-9_]+)/"]}
+  - {label: "Next Generation Sequencing (NGS) Platform", url: "https://www.ngs.unibe.ch/", template: unibe_portal, priority: 2}
+  - {label: "Institut für Medizingeschichte", url: "https://www.img.unibe.ch/", template: unibe_portal, priority: 2}
+  - {label: "Faculty of Science", url: "https://www.philnat.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Vetsuisse-Fakultät (Veterinärmedizin)", url: "https://www.vetsuisse.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Institute of Sociology", url: "https://www.soz.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Institute of Psychology", url: "https://www.psy.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Mathematical Institute", url: "https://www.math.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Department of Physics and Astronomy", url: "https://www.physik.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Biology", url: "https://www.biology.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Institute of Ecology and Evolution", url: "https://www.iee.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Institute of Plant Sciences", url: "https://www.ips.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Institute of Geological Sciences", url: "https://www.geo.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Theodor Kocher Institute (TKI)", url: "https://www.tki.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Institute of Forensic Medicine", url: "https://www.irm.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Institute for Infectious Diseases", url: "https://www.ifik.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Institute of Social and Preventive Medicine (ISPM)", url: "https://www.ispm.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Institute of Complementary and Integrative Medicine", url: "https://www.ikim.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Institute of Biochemistry and Molecular Medicine", url: "https://www.ibmm.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Institute of Pharmacology", url: "https://www.pki.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Institute of Computer Science", url: "https://www.inf.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Institute for Theoretical Physics", url: "https://www.itp.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Institute of Applied Physics", url: "https://www.iap.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Department of Chemistry, Biochemistry and Pharmaceutical Sciences", url: "https://www.dcbp.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Center for Space and Habitability (CSH)", url: "https://www.csh.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Microscopy Imaging Center", url: "https://www.mic.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Neuroscience Bern", url: "https://www.neuroscience.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Abteilung Veterinär-Anatomie", url: "https://www.ita.vetsuisse.unibe.ch/", template: unibe_portal, priority: 3}
 vocabularies: []                 # vocab/synonyms.json once supplied (decision D-08)
 report_sections: [clinical_validation, regulatory_route]
 report_sources: []

@@ -24,15 +24,21 @@ class Strict(BaseModel):
 class Template(Strict):
     main: str | None = None          # CSS selector of the content area (HTML templates)
     drop: list[str] = []             # selectors removed inside the content area
+    strip_patterns: list[str] = []   # regexes removed from the text (page-builder shortcodes)
+    skip_without: str | None = None  # pages where this selector matches nothing are navigation pages without content
     alumni_headings: list[str] = []  # text after one of these headings is cut
     wp_api: str | None = None        # WordPress REST base path (DCB)
+    wp_types: list[str] = []         # WordPress post types fetched through wp_api
     unit_paths: list[str] = []       # regexes on the URL path whose first group is a unit code
+    page_types: dict[str, str] = {}  # page type -> regex on the URL path (HTML) or post type (WordPress); first match wins
 
 
 class Host(Strict):
+    label: str                       # name of the host's own unit (its institute or centre)
     url: str
     template: str
     priority: int
+    unit_paths: list[str] | None = None  # replaces the template's unit_paths for this host
     role: str | None = None          # location_facts: report source only, no units
     render: str | None = None
 
@@ -64,6 +70,7 @@ def load_domain(domain_id: str) -> Domain:
     assert set(d.languages) <= set(LANGS), d.languages
     for name, t in d.templates.items():
         assert (t.main is None) != (t.wp_api is None), f"template {name}: exactly one of main and wp_api"
+        assert list(t.page_types.values())[-1:] == [".*"], f"template {name}: last page type must be the catch-all '.*'"
         for sel in [t.main, *t.drop] if t.main else t.drop:
             assert sel.strip() and "<" not in sel, f"template {name}: empty or placeholder selector"
     for h in d.hosts:
