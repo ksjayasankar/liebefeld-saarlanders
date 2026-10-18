@@ -194,9 +194,9 @@ def run(conn, domain: Domain) -> dict:
     units = assign_units(domain, pages)              # before the word filter: a short index page still defines its unit
     pages = [p for p in pages if words(p.text) >= MIN_WORDS]
     units = apply_aliases([u for u in units if u.id in {p.unit_id for p in pages}], pages)
-    urls = {p.url for p in pages}
-    for p in pages:
-        p.translation_of = next((u for u in p.lang_links if u in urls), None) if p.lang != "en" else None
+    english = {p.url for p in pages if p.lang == "en"}
+    for p in pages:   # a German or French page points to its English version (spec 5.2)
+        p.translation_of = next((u for u in p.lang_links if u in english), None) if p.lang != "en" else None
     people = [dict(unit_id=p.unit_id, first_last=n, titles=t, role=role, url=p.url)
               for p in pages for written, role in p.people for n, t in [split_name(written)] if n]
     for p in pages:   # the source page lists titles in the name field (D-20)

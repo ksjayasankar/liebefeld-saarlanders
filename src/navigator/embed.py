@@ -40,7 +40,7 @@ def text_hash(text: str) -> str:
 def cached(conn, texts: list[str], batch: int = 512) -> np.ndarray:
     """Vectors from cache.embeddings; only unseen texts are encoded, in batches that are committed as they finish."""
     hashes = [text_hash(t) for t in texts]
-    have = {r["text_hash"]: r["embedding"] for r in conn.execute(
+    have = {r["text_hash"]: r["embedding"].to_numpy() for r in conn.execute(
         "SELECT text_hash, embedding FROM cache.embeddings WHERE model_id = %s AND text_hash = ANY(%s)", (MODEL_ID, hashes))}
     todo = list({h: t for h, t in zip(hashes, texts) if h not in have}.items())
     for i in range(0, len(todo), batch):
@@ -50,7 +50,7 @@ def cached(conn, texts: list[str], batch: int = 512) -> np.ndarray:
             have[h] = v
         conn.commit()
         print(f"embedded {min(i + batch, len(todo))}/{len(todo)} new texts", flush=True)
-    return np.stack([np.asarray(have[h], dtype=np.float32) for h in hashes]) if texts else np.zeros((0, DIM), np.float32)
+    return np.stack([have[h].astype(np.float32) for h in hashes]) if texts else np.zeros((0, DIM), np.float32)
 
 
 def rerank(query: str, texts: list[str]) -> np.ndarray:

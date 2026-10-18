@@ -116,7 +116,7 @@ def rank(conn, domain: Domain, card: NeedCard, adjust: Adjust | None = None) -> 
     units = sorted({u for s in unit_scores.values() for u in s if any(k[1] == u for k in best_chunk)})
     if units:
         scores = np.array([[unit_scores[n.id].get(u, 0.0) for n in card.needs] for u in units])
-        vecs = np.stack([np.asarray(unit_rows[u]["embedding"]) for u in units])
+        vecs = np.stack([unit_rows[u]["embedding"].to_numpy() for u in units])
         picked = select(scores, vecs @ vecs.T, np.array([unit_rows[u]["page_count"] for u in units]), SHORTLIST)
         leads = [_lead(conn, card, unit_rows[units[i]], best_chunk, scores[i]) for i in picked]
         leads = [l for l in leads if not (adjust.hide_stale and l.stale)]
@@ -132,7 +132,7 @@ def rank(conn, domain: Domain, card: NeedCard, adjust: Adjust | None = None) -> 
 
 
 def _mean(unit_rows: dict, unit_ids: list[str] | None, like: np.ndarray) -> np.ndarray:
-    return np.mean([np.asarray(unit_rows[u]["embedding"]) for u in unit_ids], axis=0) if unit_ids else np.zeros_like(like)
+    return np.mean([unit_rows[u]["embedding"].to_numpy() for u in unit_ids], axis=0) if unit_ids else np.zeros_like(like)
 
 
 def _lead(conn, card: NeedCard, unit: dict, best_chunk: dict, score_row: np.ndarray) -> Lead:
