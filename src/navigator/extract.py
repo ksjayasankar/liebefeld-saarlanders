@@ -190,8 +190,10 @@ def load_pages(conn, domain: Domain) -> list[Page]:
 
 
 def run(conn, domain: Domain) -> dict:
-    pages = flagged_check(dedupe(domain, [p for p in load_pages(conn, domain) if words(p.text) >= MIN_WORDS]))
-    units = apply_aliases(assign_units(domain, pages), pages)
+    pages = flagged_check(dedupe(domain, load_pages(conn, domain)))
+    units = assign_units(domain, pages)              # before the word filter: a short index page still defines its unit
+    pages = [p for p in pages if words(p.text) >= MIN_WORDS]
+    units = apply_aliases([u for u in units if u.id in {p.unit_id for p in pages}], pages)
     urls = {p.url for p in pages}
     for p in pages:
         p.translation_of = next((u for u in p.lang_links if u in urls), None) if p.lang != "en" else None

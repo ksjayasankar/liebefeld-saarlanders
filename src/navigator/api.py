@@ -13,18 +13,12 @@ from fastapi.responses import JSONResponse, Response
 from psycopg import sql
 from psycopg.types.json import Jsonb
 
-from . import apertus, db, embed, rank
+from . import apertus, db, embed, needcard, rank
 from .config import env, load_domain
-from .models import (Draft, DraftRequest, FeedbackRequest, Health, Introduction, IntroductionRequest, Need, NeedCard,
-                     SearchRequest, SearchResult)
+from .models import (Draft, DraftRequest, FeedbackRequest, Health, Introduction, IntroductionRequest, NeedCard, SearchRequest,
+                     SearchResult)
 from .normalise import sentences
 
-DRAFT_SYSTEM = ("You turn a company's public description into a need card for finding research partners in Bern. "
-                "Use only the numbered sentences.")
-DRAFT_INSTRUCTION = """Return: {"sector": "...", "product": "one line",
-         "stage": "idea|prototype|clinical_testing|on_market",
-         "needs": [{"text": "one sentence", "category": "research_partner|facility|clinical_validation|licensing|support|talent", "sources": [sentence numbers]}]}
-At most 5 needs. Each need must be something a university group, facility or programme could help with."""
 MESSAGES = {
     "more_like_this": "Leads closer to this one are now ranked higher for this need.",
     "not_relevant": "Leads like this one are now ranked lower for this need.",
@@ -122,14 +116,10 @@ def build_id(conn, domain: str) -> str:
 def draft(domain: str, body: DraftRequest, request: Request):
     domain_of(domain)
     limit(request)
-    lines = sentences(body.description)
-    if not lines:
+    if not sentences(body.description):
         raise HTTPException(422, "the description has no full sentences")
     with STATE["pool"].connection() as conn:
-        d = apertus.call(conn, env("APERTUS_8B"), DRAFT_SYSTEM, lines, DRAFT_INSTRUCTION, apertus.NeedCardDraft, 0.2, 700)
-    needs = [Need(id=f"n{i}", text=n.text, category=n.category) for i, n in enumerate(d.needs, 1)]
-    return Draft(card=NeedCard(sector=d.sector, product=d.product, stage=d.stage, needs=needs), sentences=lines,
-                 sources={f"n{i}": n.sources for i, n in enumerate(d.needs, 1)})
+        return needcard.draft(conn, body.description)
 
 
 @app.post("/api/{domain}/search", response_model=SearchResult)

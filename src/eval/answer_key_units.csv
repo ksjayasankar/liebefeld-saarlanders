@@ -1,1 +1,35 @@
-query_id,query,expected_entry,unit_id
+query_id,query,split,expected_entry,unit_id
+Q1,glucose sensors,dev,Prof. Lilian Witthauer (DCB Sensing & Monitoring Lab),dcberne-sensing-smart-monitoring
+Q1,glucose sensors,dev,DCB focus area Sensing & Smart Monitoring,dcberne-sensing-smart-monitoring
+Q1,glucose sensors,dev,DCB project SPN-005,dcberne
+Q1,glucose sensors,dev,DCB project Illuminating Personalized Medicine,dcberne
+Q1,glucose sensors,dev,DCB project Moonwalk,dcberne
+Q1,glucose sensors,dev,DCB CGM publications,dcberne
+Q2,artificial pancreas,dev,Prof. José Garcia-Tirado (DCB PrecisionLab),dcberne-artificial-pancreas-biological-feedback
+Q2,artificial pancreas,dev,DCB AID-JUNCT study,dcberne
+Q2,artificial pancreas,dev,DCB focus area Artificial Pancreas & Biological Feedback,dcberne-artificial-pancreas-biological-feedback
+Q2,artificial pancreas,dev,ARTORG AIHN Adaptive Diabetes Management,artorg-aihn
+Q3,food recognition for diabetics,dev,ARTORG AIHN Intelligent Nutrition,artorg-aihn
+Q3,food recognition for diabetics,dev,DCB project Qarbs,dcberne
+Q4,gut bacteria and obesity,holdout,Prof. Maria Luisa Balmer (TrimLab),ifik-translational-immunometabolism---trim-lab---maria-balmer
+Q4,gut bacteria and obesity,holdout,DCB project Obesogenic microbiota,dcberne
+Q4,gut bacteria and obesity,holdout,DCB project FibreGum,dcberne
+Q4,gut bacteria and obesity,holdout,DCB project Wound Infection,dcberne
+Q5,lung on a chip,dev,Prof. Olivier Guenat (ARTORG OOC),artorg-ooc
+Q5,lung on a chip,dev,ARTORG OOC facility,artorg-ooc
+Q6,brain tumour segmentation,dev,Prof. Mauricio Reyes (ARTORG MIA),artorg-mia
+Q6,brain tumour segmentation,dev,DeepBraTumIA software,artorg-mia
+Q7,cochlear implant surgery,holdout,Dr. Philipp Aebischer (ARTORG HRL),artorg-hrl
+Q7,cochlear implant surgery,holdout,Prof. Stefan Weder (ARTORG HRL),artorg-hrl
+Q8,osteoporosis bone strength,dev,Prof. Philippe Zysset (ARTORG MSB),artorg-msb
+Q9,heart valve blood flow,dev,Prof. Dominik Obrist (ARTORG CVE),artorg-cve
+Q10,tumour detection during surgery with light,holdout,Prof. Brice-Olivier Demory (ARTORG MSL),artorg-msl
+Q10,tumour detection during surgery with light,holdout,MSL optical facilities,artorg-msl
+Q11,night-time low blood sugar detection,dev,DCB Sensing & Monitoring Lab (Witthauer; Mendez Schneider; Nicolier),dcberne-sensing-smart-monitoring
+Q11,night-time low blood sugar detection,dev,DCB project Moonwalk,dcberne
+Q11,night-time low blood sugar detection,dev,DCB VOC in breath,dcberne
+Q11,night-time low blood sugar detection,dev,HEADWIND project,dcberne
+Q12,clinical trial support for a medtech start-up,holdout,DCB Clinical Services,dcberne
+Q12,clinical trial support for a medtech start-up,holdout,CTU Bern (host not in the inventory),
+Q12,clinical trial support for a medtech start-up,holdout,sitem-insel (host not in the inventory),
+Q12,clinical trial support for a medtech start-up,holdout,ARTORG CCMT,artorg

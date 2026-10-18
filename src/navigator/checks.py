@@ -31,7 +31,7 @@ SERVED_TEXT = ["SELECT 'unit ' || id, summary FROM units", "SELECT 'chunk ' || i
 
 def answer_key_units() -> set[str]:
     with open(ROOT / "eval/answer_key_units.csv") as f:
-        return {r["unit_id"] for r in csv.DictReader(f)}
+        return {r["unit_id"] for r in csv.DictReader(f) if r["unit_id"]}   # empty: expected entry not in the dataset
 
 
 def run(conn, domain: Domain, schema: str):
