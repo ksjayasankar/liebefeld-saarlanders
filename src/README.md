@@ -32,6 +32,7 @@ make test
 **Demo on a Mac.** Docker on macOS cannot use the Apple GPU, so searches in the api container take about 30 s per need. For a demo, run the API on the host with `TORCH_DEVICE=mps` (about 3 s per need) and the front end from Vite:
 
 ```bash
+docker compose stop api web   # frees port 8000; the db keeps running
 make api      # http://localhost:8000
 make web      # http://localhost:5173, proxies /api to port 8000
 ```
