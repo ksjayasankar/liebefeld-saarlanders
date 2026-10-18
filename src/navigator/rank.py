@@ -16,7 +16,7 @@ LIKE, DISLIKE = 0.75, 0.15
 STALE_AFTER = timedelta(days=3 * 365)
 STEMMERS = ("english", "german", "french")
 EXPAND_SYSTEM = "List the words researchers and companies use for this need, including abbreviations and everyday words."
-EXPAND_INSTRUCTION = 'Need: the quoted line [1]\nReturn: {"en": [...], "de": [...], "fr": [...]}\nGive 5 to 15 terms per language.'
+EXPAND_INSTRUCTION = 'Need: the quoted line [1]\nReturn: {"en": [...], "de": [...], "fr": [...]}\nGive 5 to 15 terms per language, each 1 to 4 words.'
 
 
 @dataclass

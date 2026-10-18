@@ -9,7 +9,7 @@ templates:
     skip_without: "main"         # folder and link-list pages have no <main> at all
     drop: ["aside.contact-box", ".social-share", ".mdl-teaser_element", ".modal"]
     unit_paths:                  # /research/<code>/ is a unit; listing folders are not
-      - "^/(?:research|forschung)/(?:platforms/|plattformen/|research_groups/|forschungsgruppen/|groups/|gruppen/)?(?!(?:publications|publikationen|projects|projekte|topics|themen|news|jobs|platforms|plattformen|research_groups|forschungsgruppen|groups|gruppen)/)([a-z0-9_]+)/"
+      - "^/(?:research|forschung)/(?:platforms/|plattformen/|research_groups/|forschungsgruppen/|groups/|gruppen/)?(?!(?:publications|publikationen|projects|projekte|topics|themen|news|jobs|emeriti|ehemalige|former_[a-z_]+|ehemalige_forschungsgruppen|research_insights|preise_und_ehrungen|awards|platforms|plattformen|research_groups|forschungsgruppen|groups|gruppen)/)([a-z0-9_]+)/"
     page_types:
       members: "/(?:group_members|team|mitarbeitende|people|personen)/index_(?:eng|ger|fra)\\.html$"
       person: "/(?:persons|staff|personen|group_members|team|mitarbeitende|people)/"
@@ -21,6 +21,7 @@ templates:
   wordpress:
     wp_api: /wp-json/wp/v2/
     wp_types: [project, pages, posts]   # publication posts carry no content
+    unit_paths: ["^/en/focus-area-([a-z0-9-]+)/"]   # DCB focus areas
     page_types: {project: "^project$", news: "^post$", other: ".*"}
     strip_patterns: ["\\[/?et_pb_[^\\]]*\\]"]   # Divi page-builder shortcodes
 hosts:
@@ -63,7 +64,7 @@ hosts:
   - {label: "Microscopy Imaging Center", url: "https://www.mic.unibe.ch/", template: unibe_portal, priority: 3}
   - {label: "Neuroscience Bern", url: "https://www.neuroscience.unibe.ch/", template: unibe_portal, priority: 3}
   - {label: "Abteilung Veterinär-Anatomie", url: "https://www.ita.vetsuisse.unibe.ch/", template: unibe_portal, priority: 3}
-vocabularies: []                 # vocab/synonyms.json once supplied (decision D-08)
+vocabularies: [vocab/synonyms.json]   # MeSH 2026 + German MeSH + Wikidata labels, en/de/fr
 coverage_threshold: 0.2          # starting value; tune on the development queries
 report_sections:                 # public report pages, written by Apertus 70B with a source per sentence (spec 5.8)
   clinical_validation:

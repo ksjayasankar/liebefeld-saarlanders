@@ -26,7 +26,7 @@ def run(conn, domain: Domain, pages: list[dict]) -> list[dict]:
                            apertus.ReportSection, 0.2, 1200)
         for pos, s in enumerate(out.sentences, 1):
             source, url = numbered[s.source - 1]
-            if not support.check(conn, s.text, [source], "APERTUS_70B") or banned.search(s.text):
+            if not support.supporting_lines(conn, s.text, [source]) or banned.search(s.text):
                 problems.append((name, s.text, source))
             rows.append({"section": name, "position": pos, "sentence": s.text, "url": url, "source_sentence": source})
     assert not problems, "report sentences unsupported or flagged; fix the prompt or the sources:\n" + "\n".join(map(str, problems))

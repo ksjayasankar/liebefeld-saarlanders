@@ -1,3 +1,35 @@
 # Labels (match keys) that point to several concepts, resolved by hand (spec 5.5).
-# match_key: concept_id
-{}
+# match_key: concept_id kept for that label. Chosen for a medtech reader of Bern institute pages.
+verhaltenswissenschaften: D001525   # Behavioral Sciences, not Social Sciences
+speech: D007802                     # Language, not Address
+labor: D007753                      # German "Labor" = laboratory, far more frequent on our pages than English "labor"
+gerausch: D009622                   # Noise
+life sciences: D001690              # Biological Science Disciplines
+biological science: D001690
+biological sciences: D001690
+life science: D001690
+lebenswissenschaft: D001690
+infection: D007239                  # Infections
+infections: D007239
+sars cov 2: D000086402              # the virus, not the disease
+severe acute respiratory syndrome coronavirus 2: D000086402
+research laboratory: D007753        # Laboratories
+sales: D003132                      # Commerce
+cochlee: D003051                    # Cochlea
+metabolomik: D055432                # Metabolomics
+metabonomik: D055432
+therapeutics: D013812               # Therapeutics, not Pharmacology
+movement: D009068                   # Movement
+body motion: D009068
+bewegung: D009068
+mouvement: D009068
+fettleibigkeit: D009765             # Obesity
+pilote: D010865                     # Pilot Projects, not aircraft pilots
+renal disease: D007674              # Kidney Diseases
+consumption: D004435                # Eating
+translationale medizin: D057170     # Translational Research, Biomedical
+schadel: D012886                    # Skull
+health care: D003695                # Delivery of Health Care
+essen: D004435                      # Eating (German "essen"; also the city, rare here)
+alimentation: D005502               # Food
+radioonkologie: D018787             # Radiation Oncology

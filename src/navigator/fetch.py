@@ -81,7 +81,7 @@ class HostFetcher:
 
     def due(self, url: str) -> bool:
         row = self.rows.get(url)
-        if row is None:
+        if row is None or row["status"] >= 500 or row["status"] == 429:   # server errors are retried on the next run
             return True
         stale = row["last_checked_at"] < datetime.now(timezone.utc) - timedelta(days=int(env("REFRESH_DAYS")))
         return self.refresh and row["gone_at"] is None and stale
@@ -101,6 +101,8 @@ class HostFetcher:
         self.conn.commit()
         self.rows[url] = row
         self.count += 1
+        if status != 200:
+            print(f"{url}: HTTP {status}", flush=True)
         if self.count % 50 == 0:
             print(f"{self.name}: {self.count} pages, {self.count / (time.time() - self.started) * 3600:.0f} pages/hour", flush=True)
 
@@ -114,7 +116,6 @@ class HostFetcher:
         row = self.rows.get(url)
         cond = {k: v for k, v in (("If-None-Match", row and row["etag"]), ("If-Modified-Since", row and row["last_modified"])) if v}
         r = await self.get(url, cond)
-        assert r.status_code < 500 and r.status_code != 429, f"{url}: HTTP {r.status_code} (rerun resumes)"
         if r.status_code == 304:
             self.mark(url, gone=False)
             return raw_path(self.name, url).read_text()

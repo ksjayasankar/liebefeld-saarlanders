@@ -60,11 +60,24 @@ def test_summary_rejects_unknown_sentence(gateway):
         ask(FakeConn())
 
 
-@pytest.mark.parametrize("term", ["https://evil.example", "a b c d e", "research", "<img>"])
-def test_terms_reject_bad_terms(gateway, term):
-    gateway["replies"] = [(200, json.dumps({**SUMMARY, "terms": {**SUMMARY["terms"], "en": [term]}}))]
+@pytest.mark.parametrize("term", ["https://evil.example", "evil.com/x", "a b c d e f g", "<img>", "th\x0eorie", "Research"])
+def test_bad_terms_are_dropped(gateway, term):
+    gateway["replies"] = [(200, json.dumps({**SUMMARY, "terms": {**SUMMARY["terms"], "en": [term, "CGM"]}}))]
+    assert ask(FakeConn()).terms.en == ["CGM"]
+
+
+@pytest.mark.parametrize("summary", ["Builds sensors <img src=x> for clinics.", "Builds sensors for th\x0eories today.",
+                                     "Builds sensors; mail a.b@unibe.ch now."])
+def test_summary_rejects_markup_control_and_contacts(gateway, summary):
+    gateway["replies"] = [(200, json.dumps({**SUMMARY, "summary": summary}))]
     with pytest.raises(AssertionError, match="raw answer"):
         ask(FakeConn())
+
+
+@pytest.mark.parametrize("term", ["LC-MS/MS", "Ca2+", "C. elegans", "tumeurs de la base du crâne", "γ‑emitter", "modalités d'imagerie"])
+def test_terms_accept_scientific_names(gateway, term):
+    gateway["replies"] = [(200, json.dumps({**SUMMARY, "terms": {**SUMMARY["terms"], "en": [term]}}))]
+    assert ask(FakeConn()).terms.en == [term]
 
 
 def test_non_json_answer_fails_loudly(gateway):

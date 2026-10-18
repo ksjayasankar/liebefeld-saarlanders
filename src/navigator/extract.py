@@ -56,7 +56,6 @@ def split_name(written: str) -> tuple[str, str]:
     rest = " ".join(t for t in tokens if t.lower() not in TITLES)
     surname, comma, first = rest.partition(" , ")
     name = f"{first.strip(' ,')} {surname.strip(' ,')}" if comma else rest.strip(" ,")
-    assert name, f"no name in {written!r}"
     return " ".join(name.split()), " ".join(titles)
 
 
@@ -134,6 +133,10 @@ def assign_units(domain: Domain, pages: list[Page]) -> list[Unit]:
             index_of[p.url] = codes[p.url]
     same = {index_of[p.url]: twin for p in pages if p.url in index_of and p.lang != "en"
             for twin in [next((index_of[u] for u in p.lang_links if index_of.get(u, index_of[p.url]) != index_of[p.url]), None)] if twin}
+    homes = {h.url + rest for h in domain.hosts for rest in ("", "index_eng.html", "index_ger.html", "index_fra.html", "en/", "de/", "fr/")}
+    for p in pages:
+        if p.url in homes:
+            p.page_type = "group"                            # a host's home page is its unit's index page
     for p in sorted(pages, key=lambda p: p.lang != "en"):   # an English index page names the unit when there is one
         if p.url in index_of:
             uid = same.get(index_of[p.url], index_of[p.url])
@@ -193,7 +196,11 @@ def run(conn, domain: Domain) -> dict:
     for p in pages:
         p.translation_of = next((u for u in p.lang_links if u in urls), None) if p.lang != "en" else None
     people = [dict(unit_id=p.unit_id, first_last=n, titles=t, role=role, url=p.url)
-              for p in pages for written, role in p.people for n, t in [split_name(written)]]
+              for p in pages for written, role in p.people for n, t in [split_name(written)] if n]
+    for p in pages:   # the source page lists titles in the name field (D-20)
+        for written, _ in p.people:
+            if not split_name(written)[0]:
+                print(f"member row without a name, left out: {written!r} on {p.url}")
     items = [dict(unit_id=p.unit_id, kind=p.page_type, name=p.title, url=p.url)
              for p in pages if p.page_type in ("project", "facility")]
     out = {"pages": [asdict(p) for p in pages], "units": [asdict(u) for u in units], "people": people, "items": items}

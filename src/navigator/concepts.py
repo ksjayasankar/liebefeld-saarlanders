@@ -1,25 +1,25 @@
 """Spec 5.5: concepts from the vocabulary files, and tagging text with them (same code at build and request time).
 
-Vocabulary file format (assumed until synonyms.json is seen, decision D-08):
-{"<concept id>": {"source": "mesh|wikidata", "labels": {"en": [...], "de": [...], "fr": [...]}}}
+Vocabulary file format (vocab/synonyms.json, MeSH 2026 + German MeSH + Wikidata):
+{"concepts": {"<MeSH id>": {"preferred": "...", "terms": [{"term": "...", "lang": "en|de|fr", "source": "..."}], ...}}, ...}
 """
 import json
 from collections import defaultdict
 
-from .config import ROOT, Domain, load_yaml
+from .config import LANGS, ROOT, Domain, load_yaml
 from .normalise import match_key
 
 
 def load(domain: Domain) -> tuple[list[dict], list[dict]]:
     concepts, labels = {}, []
     for path in domain.vocabularies:
-        for cid, c in json.loads((ROOT / path).read_text()).items():
+        for cid, c in json.loads((ROOT / path).read_text())["concepts"].items():
             assert cid not in concepts, f"duplicate concept id {cid}"
-            concepts[cid] = {"id": cid, "source": c["source"]}
-            rows = [{"concept_id": cid, "lang": lang, "label": label, "match_key": match_key(label)}
-                    for lang, ls in c["labels"].items() for label in ls]
-            assert rows and all(r["match_key"] for r in rows), f"concept {cid} has no or empty labels"
-            labels += rows
+            concepts[cid] = {"id": cid, "source": path}
+            rows = {(t["lang"], match_key(t["term"])): {"concept_id": cid, "lang": t["lang"], "label": t["term"], "match_key": match_key(t["term"])}
+                    for t in c["terms"]}
+            assert rows and all(k[1] and k[0] in LANGS for k in rows), f"concept {cid} has no, empty or foreign-language labels"
+            labels += rows.values()
     return list(concepts.values()), resolve(labels)
 
 
@@ -31,6 +31,8 @@ def resolve(labels: list[dict]) -> list[dict]:
     overrides = load_yaml("concept_overrides.yaml")
     open_ = sorted(k for k, cs in owners.items() if len(cs) > 1 and k not in overrides)
     assert not open_, f"ambiguous labels; resolve in config/concept_overrides.yaml: {open_}"
+    wrong = {k: c for k, c in overrides.items() if c not in owners.get(k, ())}
+    assert not wrong, f"overrides for labels that are not ambiguous or name another concept: {wrong}"
     return [r for r in labels if len(owners[r["match_key"]]) == 1 or overrides[r["match_key"]] == r["concept_id"]]
 
 
