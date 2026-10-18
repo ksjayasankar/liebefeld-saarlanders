@@ -1,0 +1,9 @@
+.venv
+.git
+data
+data - downloaded
+web
+eval/results
+*.xlsx
+.pytest_cache
+navigator.egg-info
