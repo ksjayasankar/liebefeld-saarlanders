@@ -9,3 +9,6 @@ web/dist/
 ~$*
 .pytest_cache/
 !web/.env
+data - downloaded/
+.DS_Store
+navigator.egg-info/
