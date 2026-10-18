@@ -14,12 +14,12 @@ from .normalise import AI_ADDRESSED, EMAIL, PHONE, clean_text, match_key, words
 
 BLOCKS = ["p", "li", "h1", "h2", "h3", "h4", "h5", "h6", "td", "th", "dt", "dd", "div", "section", "article",
           "aside", "tr", "address", "blockquote", "figcaption", "br"]
-LANG_SUFFIX = {"_eng": "en", "_ger": "de", "_fra": "fr"}
+LANG_SUFFIX = {"_eng": "en", "_ger": "de", "_fra": "fr", "_ita": None}   # Italian pages are not indexed
+LANG_META = {"eng": "en", "ger": "de", "fra": "fr", "ita": None}
 TITLES = {"prof.", "em.", "dr.", "pd", "med.", "phil.", "nat.", "rer.", "dent.", "vet.", "sc.", "techn.", "habil.",
           "pharm.", "jur.", "oec.", "hist.", "dipl.", "ing.", "msc", "phd", "md", "mba", "bsc", "dr", "prof"}
 MIN_WORDS = 30  # a page with less content carries no evidence
 LEAD_ROLE = re.compile(r"head|director|leader|principal investigator|\bPI\b|leiter|direktor", re.I)   # contact person (D-26)
-PERSON = '[itemtype$="schema.org/Person"]'
 
 
 @dataclass
@@ -77,29 +77,35 @@ def cut_alumni(text: str, headings: list[str]) -> str:
     return "\n".join(lines[:cut])
 
 
-def person_entries(main, url: str, alumni_headings: list[str]) -> list[dict]:
-    """schema.org Person markup: a `team-box` on a member list (name, function, link to the person's page) or the
-    `team-detail` block of the person's own page (name, function, affiliation line). Entries after an alumni heading are left out."""
-    cut = next((h for h in main.find_all(["h1", "h2", "h3", "h4"]) if h.get_text(strip=True) in alumni_headings), None)
+def person_entries(main, url: str, t: Template) -> list[dict]:
+    """The template's person cards: on a member list (with a link to the person's own page) or on the person's own
+    page (`link` is None). Entries after an alumni heading are left out."""
+    cut = next((h for h in main.find_all(["h1", "h2", "h3", "h4"]) if h.get_text(strip=True) in t.alumni_headings), None)
     after = {id(el) for el in cut.find_all_next()} if cut else set()
     text = lambda el: el and (" ".join(el.get_text(" ").split()) or None)
-    found = lambda rx, el: (m := el and re.search(rx, el.get_text(" "))) and m.group(0)
+    found = lambda rx, el: (m := el and re.search(rx, f"{el.get_text(' ')} {el.get('href', '')}")) and m.group(0)   # text or mailto: link
     out = []
-    for art in main.select(PERSON):
-        if id(art) in after:
-            continue
-        if "team-detail" in art.get("class", []):
-            name, job = art.select_one("[itemprop=name]"), art.select_one("[itemprop=jobTitle]")
-            aff, link = (job or name).find_next_sibling("p", itemprop=False), url
-        else:
-            label = art.find("dt", string=re.compile(r"^\s*Name / Tit(?:el|le)\s*$"))
-            name, job, aff = label and label.find_next_sibling("dd"), art.select_one(".jobTitle"), None
-            a = name and name.find("a", href=True)
-            link = a and normalise_url(urljoin(url, a["href"]))
-        out.append(dict(name=text(name) or "", function=text(job), affiliation=text(aff), profile_url=link,
-                        email=found(EMAIL, art.select_one("[itemprop=email]")), phone=found(PHONE, art.select_one("[itemprop=telephone]")),
-                        own_page=link == url))
+    for spec in t.people:
+        for card in main.select(spec.card):
+            if id(card) in after:
+                continue
+            sel = lambda css: css and card.select_one(css)
+            a = sel(spec.link)
+            link = url if spec.link is None else a and a.get("href") and normalise_url(urljoin(url, a["href"]))
+            out.append(dict(name=text(sel(spec.name)) or "", function=text(sel(spec.function)), affiliation=text(sel(spec.affiliation)),
+                            profile_url=link, email=found(EMAIL, sel(spec.email)), phone=found(PHONE, sel(spec.phone)),
+                            own_page=spec.link is None))
     return out
+
+
+def page_lang(t: Template, soup, path: str) -> str | None:
+    """None for a language the index does not cover. UniBE: file suffix or DC.Language; other sites: a path segment."""
+    if t.lang_segment is None:
+        (lang,) = [v for k, v in LANG_SUFFIX.items() if path.endswith(f"index{k}.html")] or [
+            LANG_META[soup.find("meta", attrs={"name": "DC.Language"})["content"]]]
+        return lang
+    seg = ([s for s in path.split("/") if s][t.lang_segment:t.lang_segment + 1] or [""])[0]
+    return seg if seg in LANGS else None if re.fullmatch("[a-z]{2}", seg) else t.default_lang
 
 
 def parse_html(domain: Domain, host: str, url: str, html: str) -> Page | None:
@@ -116,17 +122,20 @@ def parse_html(domain: Domain, host: str, url: str, html: str) -> Page | None:
             el.decompose()
     raw = cut_alumni(block_text(main), t.alumni_headings)
     path = urlsplit(url).path
-    (lang,) = [v for k, v in LANG_SUFFIX.items() if path.endswith(f"index{k}.html")] or [
-        {"eng": "en", "ger": "de", "fra": "fr"}[soup.find("meta", attrs={"name": "DC.Language"})["content"]]]
+    lang = page_lang(t, soup, path)
+    if lang is None:
+        print(f"language not indexed: {url}")
+        return None
     date = soup.find("meta", attrs={"name": "DC.Date"})
     h1 = main.find("h1")
-    title = clean_text(h1.get_text(" ") if h1 else soup.find("meta", attrs={"name": "DC.Title"})["content"])
+    meta_title = soup.find("meta", attrs={"name": "DC.Title"})
+    title = clean_text(h1.get_text(" ") if h1 else meta_title["content"] if meta_title else soup.title.get_text(" "))
     switch = [normalise_url(a["href"]) for a in soup.find_all("a", href=True) if a.get_text(strip=True) in ("DE", "EN", "FR")]
     text = clean_text(raw)
     ptype = page_type(t, path)
-    return Page(url, host, lang, ptype, title, date and datetime.strptime(date["content"], "%d.%m.%Y").date().isoformat(),
+    return Page(url, host, lang, ptype, title, date and datetime.strptime(date["content"], t.date_format).date().isoformat(),
                 text, hashlib.sha256(text.encode()).hexdigest(), lang_links=[u for u in switch if u != url],
-                people=person_entries(main, url, t.alumni_headings))
+                people=person_entries(main, url, t))
 
 
 def parse_wordpress(domain: Domain, host: str, url: str, item: dict) -> Page:
@@ -231,6 +240,7 @@ def load_pages(conn, domain: Domain) -> list[Page]:
     rows = conn.execute("SELECT url, host, raw_path FROM dataset.pages WHERE status = 200 AND gone_at IS NULL "
                         "AND host = ANY(%s) ORDER BY url", (list(hosts),)).fetchall()
     assert rows, "dataset is empty; run navigator fetch"
+    rows = [r for r in rows if domain.host(r["host"]).allows(urlsplit(r["url"]).path)]
     raw = lambda r: (ROOT / r["raw_path"]).read_text(encoding="utf-8")
     pages = [parse_wordpress(domain, r["host"], r["url"], json.loads(raw(r))) if hosts[r["host"]].wp_api
              else parse_html(domain, r["host"], r["url"], raw(r)) for r in rows]

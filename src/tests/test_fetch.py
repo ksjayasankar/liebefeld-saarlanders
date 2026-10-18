@@ -39,3 +39,9 @@ def test_links_resolves_relative():
     html = '<a href="./research/index_eng.html?q=1">r</a><a href="https://x.ch/a.html">x</a>'
     assert links("https://www.artorg.unibe.ch/index_eng.html", html, "artorg.unibe.ch") == [
         "https://www.artorg.unibe.ch/research/index_eng.html"]
+
+
+def test_keep_link_accepts_paths_without_extension():
+    assert keep_link("be-advanced.ch", "https://be-advanced.ch/ueber-uns")
+    assert keep_link("bfh.ch", "https://www.bfh.ch/en/research/")
+    assert not keep_link("bfh.ch", "https://www.bfh.ch/en/report.pdf")

@@ -55,8 +55,10 @@ def host_name(url: str) -> str:
 
 
 def keep_link(host: str, url: str) -> bool:
+    """A page on the same host: a path ending in .html or /, or a last segment without a file extension (TYPO3, Drupal)."""
     u = urlsplit(url)
-    return u.scheme in ("http", "https") and host_name(url) == host and (u.path.endswith(".html") or u.path.endswith("/"))
+    return u.scheme in ("http", "https") and host_name(url) == host and (
+        u.path.endswith((".html", "/")) or "." not in u.path.rsplit("/", 1)[-1])
 
 
 def raw_path(host: str, url: str) -> Path:
@@ -128,16 +130,19 @@ class HostFetcher:
         self.store(final, r.status_code, r.content, r.headers)
         return r.text if r.status_code == 200 else None
 
-    async def crawl(self, robots: list[tuple[bool, str]]):
-        seeds = [normalise_url(urljoin(self.host.url, p)) for p in ("index_eng.html", "index_ger.html")]
+    async def crawl(self, robots: list[tuple[bool, str]], seed_paths: list[str]):
+        seeds = [normalise_url(urljoin(self.host.url, p)) for p in seed_paths]
+        assert all(self.host.allows(urlsplit(u).path) for u in seeds), f"{self.name}: a seed is outside allow_paths"
         queue, seen = deque(seeds), set(seeds)
         while queue and len([r for r in self.rows.values() if r["status"] == 200]) < self.cap:
             url = queue.popleft()
-            if not robots_allows(robots, urlsplit(url).path):
+            path = urlsplit(url).path
+            if not robots_allows(robots, path) or not self.host.allows(path):
                 continue
             html = await self.fetch_page(url) if self.due(url) else (
                 raw_path(self.name, url).read_text() if self.rows[url]["status"] == 200 else None)
-            for link in links(url, html, self.name) if html else []:
+            leaf = any(re.search(rx, path) for rx in self.host.leaf_paths)
+            for link in links(url, html, self.name) if html and not leaf else []:
                 if link not in seen:
                     seen.add(link)
                     queue.append(link)
@@ -172,7 +177,7 @@ async def run(domain: Domain, refresh: bool, only: list[str] | None):
                 else:
                     r = await f.get(urljoin(h.url, "/robots.txt"))
                     assert r.status_code in (200, 404), f"{h.name} robots.txt: HTTP {r.status_code}"
-                    await f.crawl(parse_robots(r.text) if r.status_code == 200 else [])
+                    await f.crawl(parse_robots(r.text) if r.status_code == 200 else [], h.seeds or t.seeds)
                 print(f"{h.name}: done, {f.count} pages written this run", flush=True)
 
             results = await asyncio.gather(*(one(h) for h in hosts), return_exceptions=True)

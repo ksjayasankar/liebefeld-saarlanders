@@ -21,8 +21,24 @@ class Strict(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
+class PersonCard(Strict):
+    """Where a site puts a person: CSS selectors inside the card (D-26, D-27)."""
+    card: str
+    name: str
+    function: str | None = None
+    affiliation: str | None = None
+    link: str | None = None          # the link to the person's own page; None: the card is on the person's own page
+    email: str | None = None
+    phone: str | None = None
+
+
 class Template(Strict):
     main: str | None = None          # CSS selector of the content area (HTML templates)
+    seeds: list[str] = []            # paths the crawl starts from, relative to the host URL
+    lang_segment: int | None = None  # path segment holding the language (0 = first); None: UniBE file suffix or DC.Language
+    default_lang: str | None = None  # language of pages whose segment is not a language code (sites with an unprefixed language)
+    people: list[PersonCard] = []    # person cards on member lists and personal pages
+    date_format: str = "%d.%m.%Y"    # format of the DC.Date meta (UniBE: 22.12.2025)
     drop: list[str] = []             # selectors removed inside the content area
     strip_patterns: list[str] = []   # regexes removed from the text (page-builder shortcodes)
     skip_without: str | None = None  # pages where this selector matches nothing are navigation pages without content
@@ -39,12 +55,19 @@ class Host(Strict):
     template: str
     priority: int
     unit_paths: list[str] | None = None  # replaces the template's unit_paths for this host
+    seeds: list[str] | None = None   # replaces the template's seeds for this host
+    allow_paths: list[str] | None = None  # regexes: only these paths are fetched (and crawled through)
+    leaf_paths: list[str] = []       # regexes: fetched when linked from an allowed page, but their links are not followed
     role: str | None = None          # news: the host's pages are evidence of other units' work, the host is never a lead
     render: str | None = None
 
     @property
     def name(self) -> str:
         return urlsplit(self.url).netloc.lower().removeprefix("www.")
+
+    def allows(self, path: str) -> bool:
+        """The fetcher crawls and the extractor reads only these paths, so narrowing a host also drops pages fetched before."""
+        return self.allow_paths is None or any(re.search(rx, path) for rx in [*self.allow_paths, *self.leaf_paths])
 
 
 class ReportSection(Strict):
@@ -78,6 +101,8 @@ def load_domain(domain_id: str) -> Domain:
     for name, t in d.templates.items():
         assert (t.main is None) != (t.wp_api is None), f"template {name}: exactly one of main and wp_api"
         assert list(t.page_types.values())[-1:] == [".*"], f"template {name}: last page type must be the catch-all '.*'"
+        assert t.wp_api or t.seeds, f"template {name}: an HTML template needs seeds"
+        assert t.default_lang in (None, *LANGS), f"template {name}: default_lang {t.default_lang}"
         for sel in [t.main, *t.drop] if t.main else t.drop:
             assert sel.strip() and "<" not in sel, f"template {name}: empty or placeholder selector"
     for h in d.hosts:
@@ -85,6 +110,8 @@ def load_domain(domain_id: str) -> Domain:
         assert h.url.startswith("https://") and h.url.endswith("/"), f"host url {h.url}"
         assert h.role in (None, "news"), f"host {h.url}: unknown role {h.role}"
         assert h.render is None, f"host {h.url}: render={h.render} needs Playwright, not installed (decision D-09)"
+        for rx in [*(h.allow_paths or []), *h.leaf_paths, *(h.unit_paths or [])]:
+            re.compile(rx)
     assert len({h.name for h in d.hosts}) == len(d.hosts), "duplicate host"
     for p in [*d.vocabularies, d.test_set]:
         assert (ROOT / p).exists(), f"missing path {p}"

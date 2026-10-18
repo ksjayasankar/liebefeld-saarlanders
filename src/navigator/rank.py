@@ -12,7 +12,8 @@ from .normalise import sentences
 
 POOL, RRF_K, CONCEPT_BOOST, BEST_CHUNKS = 200, 60, 0.01, 3
 SHORTLIST, DIVERSITY, TIE_BAND = 10, 0.2, 0.05   # tie band relative to the best gain
-CANDIDATE_SHARE = 0.05  # a unit is a candidate if its best page chunk reaches this share of the need's best chunk score
+CANDIDATE_SHARE = 0.05  # a unit is a candidate if its best page chunk reaches this share of the need's best chunk score,
+MIN_CANDIDATES = 5      # or is among the need's 5 best units: one dominant page must not empty the list (issue 58)
 COVER = 0.8   # coverage probability of a unit scored 1: the best unit leaves 20% of a need open, so relevance keeps ordering
 LIKE, DISLIKE = 0.75, 0.15
 STALE_AFTER = timedelta(days=3 * 365)
@@ -121,7 +122,11 @@ def rank(conn, domain: Domain, card: NeedCard, adjust: Adjust | None = None) -> 
         raw_best[need.id] = max((max(ss) for ss in per_unit.values()), default=0.0)
 
     leads = []
-    units = sorted({u for (n, u), (score, _) in best_chunk.items() if score >= CANDIDATE_SHARE * raw_best[n]})
+    by_need: dict[str, list[tuple[float, str]]] = {}
+    for (n, u), (score, _) in best_chunk.items():
+        by_need.setdefault(n, []).append((score, u))
+    units = sorted({u for n, su in by_need.items() for i, (score, u) in enumerate(sorted(su, reverse=True))
+                    if i < MIN_CANDIDATES or score >= CANDIDATE_SHARE * raw_best[n]})
     if units:
         scores = np.array([[unit_scores[n.id].get(u, 0.0) for n in card.needs] for u in units])
         vecs = np.stack([unit_rows[u]["embedding"].to_numpy() for u in units])

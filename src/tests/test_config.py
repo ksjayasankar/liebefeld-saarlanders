@@ -36,3 +36,10 @@ def test_load_domain_asserts(tmp_path, monkeypatch, change):
     domain_id = _write(tmp_path, monkeypatch, **change)
     with pytest.raises(AssertionError):
         config.load_domain(domain_id)
+
+
+def test_host_allow_and_leaf_paths():
+    d = config.load_domain("medtech")
+    assert not d.host("be-advanced.ch").allows("/stories/details/x") and d.host("be-advanced.ch").allows("/startup")
+    bfh = d.host("bfh.ch")
+    assert bfh.allows("/en/about-bfh/people/abc/") and not bfh.allows("/en/study/")

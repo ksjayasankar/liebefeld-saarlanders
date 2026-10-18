@@ -104,3 +104,24 @@ def test_concept_tag_longest_first():
                           {"concept_id": "glucose", "match_key": "glucose"}])
     assert concepts.tag("Continuous glucose-monitoring for kids", idx) == {"cgm"}
     assert concepts.tag("Glucose and continuous glucose monitoring", idx) == {"cgm", "glucose"}
+
+
+def test_italian_pages_are_not_indexed():
+    assert parse_html(D, "artorg.unibe.ch", "https://www.artorg.unibe.ch/research/msl/index_ita.html", PAGE) is None
+
+
+def test_language_from_path_segment():
+    from navigator.extract import page_lang
+    t = D.templates["be_advanced"]
+    assert [page_lang(t, None, p) for p in ("/fr/startup", "/startup", "/it/startup")] == ["fr", "de", None]
+    assert page_lang(D.templates["swissmedic"], None, "/swissmedic/en/home/medical-devices.html") == "en"
+
+
+def test_person_card_email_from_mailto_link():
+    html = """<html><head><title>Team</title></head><body><main id="content"><h1>Team</h1>
+<div class="team_loop_item"><a href="mailto:a.b@sipbb.ch"></a><div data-widget_type="theme-post-title.default">A B</div>
+<div data-widget_type="text-editor.default">Head of Swiss HealthTech Center</div></div>
+<p>The team runs the park and supports health technology companies in the region every day.</p></main></body></html>"""
+    p = parse_html(D, "sipbb.ch", "https://sipbb.ch/park-biel-bienne/team/", html)
+    assert [(e["name"], e["function"], e["email"]) for e in p.people] == [("A B", "Head of Swiss HealthTech Center", "a.b@sipbb.ch")]
+    assert p.lang == "en"
