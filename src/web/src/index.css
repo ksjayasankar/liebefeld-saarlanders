@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+/* Design tokens from the AI-template (tailwind.config.js there): brand blues, semantic surfaces, Inter, soft shadows.
+   Light values here; dark (navy) values follow the system setting below. */
+@theme {
+  --color-brand-50: #eef1fd;
+  --color-brand-100: #dde3fb;
+  --color-brand-200: #b9c5f5;
+  --color-brand-300: #94a6ee;
+  --color-brand-400: #6f86e4;
+  --color-brand-500: #4c64d6;
+  --color-brand-600: #3e51c2;
+  --color-brand-700: #33429f;
+  --color-brand-800: #2b377f;
+  --color-brand-900: #232d63;
+
+  --color-ink: #0f172a;     /* main text */
+  --color-page: #ffffff;    /* page background */
+  --color-surface: #f5f7fc; /* soft grey panels */
+  --color-field: #eef1f8;   /* input boxes */
+  --color-card: #ffffff;    /* cards, chips */
+  --color-line: #0f172a;    /* borders, used with low opacity */
+
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+
+  --shadow-pill: 0 1px 0 rgba(255, 255, 255, 0.35) inset, 0 6px 16px -4px rgba(62, 81, 194, 0.55);
+  --shadow-soft: 0 1px 2px rgba(15, 23, 42, 0.06), 0 8px 24px -12px rgba(15, 23, 42, 0.18);
+
+  --animate-ring: ring 1.4s ease-out infinite;
+  --animate-fade-up: fade-up 0.5s ease-out both;
+  @keyframes ring {
+    0% { transform: scale(1); opacity: 0.55; }
+    100% { transform: scale(1.7); opacity: 0; }
+  }
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-ink: #e2e8f0;
+    --color-page: #0b1226;
+    --color-surface: #111a34;
+    --color-field: #16213f;
+    --color-card: #131d3a;
+    --color-line: #94a3b8;
+    --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px -12px rgba(0, 0, 0, 0.6);
+    color-scheme: dark;
+  }
+}
+
+@layer base {
+  body { @apply bg-surface text-ink antialiased; }
+  :focus-visible { @apply outline-2 outline-offset-2 outline-brand-500; }
+}
+
+@layer components {
+  .card { @apply rounded-2xl border border-line/10 bg-card p-4 shadow-soft sm:p-6; }
+  .field { @apply w-full rounded-xl border border-line/15 bg-field px-3 py-2 text-ink placeholder:text-ink/45; }
+  .label { @apply mb-1 block text-sm font-medium; }
+  .hint { @apply text-sm text-ink/70; }
+  .btn { @apply inline-flex items-center justify-center rounded-full bg-brand-600 px-5 py-2 font-medium text-white shadow-pill hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50; }
+  .btn-ghost { @apply inline-flex items-center justify-center rounded-full border border-line/15 bg-card px-4 py-2 font-medium hover:bg-field disabled:cursor-not-allowed disabled:opacity-50; }
+  .chip { @apply rounded-full border border-line/15 bg-card px-3 py-1 text-sm hover:border-brand-500 hover:text-brand-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:text-brand-300; }
+  .tag { @apply rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-medium text-brand-800 dark:bg-brand-500/15 dark:text-brand-200; }
+  .warn { @apply rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-900 dark:bg-amber-400/15 dark:text-amber-200; }
+  .link { @apply font-medium text-brand-600 underline-offset-2 hover:underline dark:text-brand-300; }
+  .kicker { @apply text-xs font-semibold tracking-wide text-ink/60 uppercase; }
+}
