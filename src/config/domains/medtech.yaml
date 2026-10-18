@@ -1,0 +1,55 @@
+# Domain pack: the only place where medtech appears (spec section 3).
+id: medtech                      # also names the database schema: live_medtech
+label: Medical technology
+languages: [en, de, fr]
+max_pages_per_host: 1500
+templates:
+  unibe_portal:                  # the shared UniBE web system
+    main: "main#content"
+    drop: []
+    alumni_headings: ["Alumni", "Former members", "Former Members", "Ehemalige", "Ehemalige Mitarbeitende"]
+  wordpress:
+    wp_api: /wp-json/wp/v2/
+hosts:
+  - {url: "https://www.dcberne.com/", template: wordpress, priority: 1}
+  - {url: "https://www.artorg.unibe.ch/", template: unibe_portal, priority: 1}
+  - {url: "https://mediarelations.unibe.ch/", template: unibe_portal, priority: 2}
+  - {url: "https://www.medizin.unibe.ch/", template: unibe_portal, priority: 2}
+  - {url: "https://www.aiub.unibe.ch/", template: unibe_portal, priority: 2}
+  - {url: "https://www.phinst.unibe.ch/", template: unibe_portal, priority: 2}
+  - {url: "https://www.izb.unibe.ch/", template: unibe_portal, priority: 2}
+  - {url: "https://www.cde.unibe.ch/", template: unibe_portal, priority: 2}
+  - {url: "https://www.oeschger.unibe.ch/", template: unibe_portal, priority: 2}
+  - {url: "https://www.bcpm.unibe.ch/", template: unibe_portal, priority: 2}
+  - {url: "https://www.dbmr.unibe.ch/", template: unibe_portal, priority: 2}
+  - {url: "https://www.ngs.unibe.ch/", template: unibe_portal, priority: 2}
+  - {url: "https://www.img.unibe.ch/", template: unibe_portal, priority: 2}
+  - {url: "https://www.philnat.unibe.ch/", template: unibe_portal, priority: 3}
+  - {url: "https://www.vetsuisse.unibe.ch/", template: unibe_portal, priority: 3}
+  - {url: "https://www.soz.unibe.ch/", template: unibe_portal, priority: 3}
+  - {url: "https://www.psy.unibe.ch/", template: unibe_portal, priority: 3}
+  - {url: "https://www.math.unibe.ch/", template: unibe_portal, priority: 3}
+  - {url: "https://www.physik.unibe.ch/", template: unibe_portal, priority: 3}
+  - {url: "https://www.biology.unibe.ch/", template: unibe_portal, priority: 3}
+  - {url: "https://www.iee.unibe.ch/", template: unibe_portal, priority: 3}
+  - {url: "https://www.ips.unibe.ch/", template: unibe_portal, priority: 3}
+  - {url: "https://www.geo.unibe.ch/", template: unibe_portal, priority: 3}
+  - {url: "https://www.tki.unibe.ch/", template: unibe_portal, priority: 3}
+  - {url: "https://www.irm.unibe.ch/", template: unibe_portal, priority: 3}
+  - {url: "https://www.ifik.unibe.ch/", template: unibe_portal, priority: 3}
+  - {url: "https://www.ispm.unibe.ch/", template: unibe_portal, priority: 3}
+  - {url: "https://www.ikim.unibe.ch/", template: unibe_portal, priority: 3}
+  - {url: "https://www.ibmm.unibe.ch/", template: unibe_portal, priority: 3}
+  - {url: "https://www.pki.unibe.ch/", template: unibe_portal, priority: 3}
+  - {url: "https://www.inf.unibe.ch/", template: unibe_portal, priority: 3}
+  - {url: "https://www.itp.unibe.ch/", template: unibe_portal, priority: 3}
+  - {url: "https://www.iap.unibe.ch/", template: unibe_portal, priority: 3}
+  - {url: "https://www.dcbp.unibe.ch/", template: unibe_portal, priority: 3}
+  - {url: "https://www.csh.unibe.ch/", template: unibe_portal, priority: 3}
+  - {url: "https://www.mic.unibe.ch/", template: unibe_portal, priority: 3}
+  - {url: "https://www.neuroscience.unibe.ch/", template: unibe_portal, priority: 3}
+  - {url: "https://www.ita.vetsuisse.unibe.ch/", template: unibe_portal, priority: 3}
+vocabularies: []                 # vocab/synonyms.json once supplied (decision D-08)
+report_sections: [clinical_validation, regulatory_route]
+report_sources: []
+test_set: eval/

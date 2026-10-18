@@ -1,0 +1,8 @@
+pyproject.toml
+navigator/__init__.py
+navigator.egg-info/PKG-INFO
+navigator.egg-info/SOURCES.txt
+navigator.egg-info/dependency_links.txt
+navigator.egg-info/entry_points.txt
+navigator.egg-info/requires.txt
+navigator.egg-info/top_level.txt
