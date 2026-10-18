@@ -47,6 +47,7 @@ class Draft(Strict):
     card: NeedCard
     sentences: list[str]                  # the numbered description sentences the needs cite
     sources: dict[str, list[int]]         # need id -> sentence numbers
+    ignored: list[str]                    # description sentences addressed to an AI system, not sent to the model
 
 
 class SearchRequest(Strict):

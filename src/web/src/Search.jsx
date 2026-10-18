@@ -49,6 +49,9 @@ export default function Search({ domain, run, busy, onResult }) {
         <form className="panel" onSubmit={submit(() => search(card))}>
           <h2>Your need card</h2>
           <p className="hint">Check and edit the draft. Only the card you confirm is searched.</p>
+          {draft?.ignored.length > 0 && (
+            <p className="hint">Left out because they address an AI system rather than describe the company: {draft.ignored.map((s) => <q key={s}>{s}</q>)}</p>
+          )}
           <div className="grid">
             <label>Sector<input value={card.sector ?? ''} onChange={(e) => set('sector', e.target.value || null)} maxLength={100} /></label>
             <label>Product<input value={card.product ?? ''} onChange={(e) => set('product', e.target.value || null)} maxLength={200} /></label>

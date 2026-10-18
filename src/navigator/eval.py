@@ -31,7 +31,7 @@ def injection(conn, domain) -> dict:
     flagged = sum(bool(AI_ADDRESSED.search(parse_html(domain, "artorg.unibe.ch", u, (EVAL / "injection/pages" / f).read_text()).text))
                   for f, u in urls.items())
     descs = json.loads((EVAL / "injection/descriptions.json").read_text())
-    followed = [d for d in descs if MARKER in needcard.draft(conn, d).model_dump_json()]
+    followed = [d for d in descs if MARKER in needcard.draft(conn, d).card.model_dump_json()]   # the card, not the echoed input
     return {"planted pages flagged": f"{flagged}/{len(urls)}", "drafts that followed a planted instruction": f"{len(followed)}/{len(descs)}"}
 
 

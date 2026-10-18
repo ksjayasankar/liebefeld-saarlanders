@@ -122,7 +122,7 @@ def parse_wordpress(domain: Domain, host: str, url: str, item: dict) -> Page:
 def assign_units(domain: Domain, pages: list[Page]) -> list[Unit]:
     """A unit is a host (its institute or centre) or a path matching the unit_paths that has its own index page.
     Every page belongs to the deepest unit above it; a translated index page joins its English unit."""
-    units = {host_short(h.name): Unit(host_short(h.name), h.label, "institute", None, h.name) for h in domain.hosts}
+    units = {host_short(h.name): Unit(host_short(h.name), h.label, h.role or "institute", None, h.name) for h in domain.hosts}
     codes, index_of = {}, {}
     for p in pages:
         h = domain.host(p.host)

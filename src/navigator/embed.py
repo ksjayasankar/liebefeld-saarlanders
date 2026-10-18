@@ -49,7 +49,8 @@ def cached(conn, texts: list[str], batch: int = 512) -> np.ndarray:
             conn.execute("INSERT INTO cache.embeddings VALUES (%s, %s, %s) ON CONFLICT DO NOTHING", (MODEL_ID, h, v))
             have[h] = v
         conn.commit()
-        print(f"embedded {min(i + batch, len(todo))}/{len(todo)} new texts", flush=True)
+        if len(todo) > 1:   # build progress; a request embeds one need at a time
+            print(f"embedded {min(i + batch, len(todo))}/{len(todo)} new texts", flush=True)
     return np.stack([have[h].astype(np.float32) for h in hashes]) if texts else np.zeros((0, DIM), np.float32)
 
 

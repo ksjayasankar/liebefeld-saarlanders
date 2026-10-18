@@ -17,7 +17,7 @@ from . import apertus, db, embed, needcard, rank
 from .config import env, load_domain
 from .models import (Draft, DraftRequest, FeedbackRequest, Health, Introduction, IntroductionRequest, NeedCard, SearchRequest,
                      SearchResult)
-from .normalise import sentences
+from .normalise import AI_ADDRESSED, sentences
 
 MESSAGES = {
     "more_like_this": "Leads closer to this one are now ranked higher for this need.",
@@ -116,8 +116,8 @@ def build_id(conn, domain: str) -> str:
 def draft(domain: str, body: DraftRequest, request: Request):
     domain_of(domain)
     limit(request)
-    if not sentences(body.description):
-        raise HTTPException(422, "the description has no full sentences")
+    if not [s for s in sentences(body.description) if not AI_ADDRESSED.search(s)]:
+        raise HTTPException(422, "the description has no full sentences about the company")
     with STATE["pool"].connection() as conn:
         return needcard.draft(conn, body.description)
 

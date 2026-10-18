@@ -20,6 +20,12 @@ def test_diversity_penalty_skips_near_duplicate():
     assert select(scores, sims, np.array([1, 1, 1]), 2) == [0, 2]
 
 
+def test_tie_band_is_relative():
+    # after the first pick covers the need, gains are tiny; the 1-page unit must not win on pages alone
+    scores = np.array([[1.0], [0.9], [0.05]])
+    assert select(scores, np.zeros((3, 3)), np.array([10, 10, 1]), 2) == [0, 1]
+
+
 def test_select_never_repeats():
     scores = np.array([[0.2], [0.1]])
     assert sorted(select(scores, np.eye(2), np.array([1, 1]), 5)) == [0, 1]

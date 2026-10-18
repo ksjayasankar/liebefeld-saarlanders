@@ -122,7 +122,8 @@ def _slots() -> threading.BoundedSemaphore:
 
 
 def prompt(lines: list[str], instruction: str) -> str:
-    quoted = "\n".join(f"[{i}] {' '.join(line.split())}" for i, line in enumerate(lines, 1))
+    """Outside text as numbered quoted lines; its angle brackets are replaced so it cannot close the block (issue 34)."""
+    quoted = "\n".join(f"[{i}] {' '.join(line.split()).replace('<', '‹').replace('>', '›')}" for i, line in enumerate(lines, 1))
     return f"<quoted>\n{quoted}\n</quoted>\n{instruction}"
 
 

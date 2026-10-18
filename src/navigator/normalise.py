@@ -8,7 +8,8 @@ PHONE = r"(?:\+|\b00)\d{2}[\d\s/().-]{7,}\d|\b0\d{2}[\s/]\d{3}[\s/]?\d{2}\s?\d{2
 CONTACT_RE = re.compile(f"{EMAIL}|{PHONE}")
 AI_ADDRESSED = re.compile(  # text addressed to an AI system (spec section 4)
     r"ignore (?:all |any )?(?:previous|prior|above) instructions|system prompt|disregard (?:all |the )?(?:previous|prior|above)"
-    r"|you are (?:an? )?(?:ai|language model|assistant|chatbot)\b|as an ai\b", re.I)
+    r"|you are (?:an? )?(?:ai|language model|assistant|chatbot)\b|as an ai\b"
+    r"|(?:^|[.!?]\s+)system\s*:|\badmin(?:istrator)? mode\b|</?quoted>", re.I)
 HYPHENS = re.compile(r"[‐-―−'’`´-]")
 
 

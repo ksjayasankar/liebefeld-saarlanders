@@ -27,7 +27,7 @@ templates:
 hosts:
   - {label: "Diabetes Center Berne (DCB)", url: "https://www.dcberne.com/", template: wordpress, priority: 1}
   - {label: "ARTORG Center for Biomedical Engineering Research", url: "https://www.artorg.unibe.ch/", template: unibe_portal, priority: 1}
-  - {label: "Media Relations, University of Bern", url: "https://mediarelations.unibe.ch/", template: unibe_portal, priority: 2}
+  - {label: "Media Relations, University of Bern", url: "https://mediarelations.unibe.ch/", template: unibe_portal, priority: 2, role: news}
   - {label: "Faculty of Medicine", url: "https://www.medizin.unibe.ch/", template: unibe_portal, priority: 2}
   - {label: "Astronomical Institute", url: "https://www.aiub.unibe.ch/", template: unibe_portal, priority: 2}
   - {label: "Physikalisches Institut", url: "https://www.phinst.unibe.ch/", template: unibe_portal, priority: 2}

@@ -39,7 +39,7 @@ class Host(Strict):
     template: str
     priority: int
     unit_paths: list[str] | None = None  # replaces the template's unit_paths for this host
-    role: str | None = None          # location_facts: report source only, no units
+    role: str | None = None          # news: the host's pages are evidence of other units' work, the host is never a lead
     render: str | None = None
 
     @property
@@ -83,6 +83,7 @@ def load_domain(domain_id: str) -> Domain:
     for h in d.hosts:
         assert h.template in d.templates, f"host {h.url}: unknown template {h.template}"
         assert h.url.startswith("https://") and h.url.endswith("/"), f"host url {h.url}"
+        assert h.role in (None, "news"), f"host {h.url}: unknown role {h.role}"
         assert h.render is None, f"host {h.url}: render={h.render} needs Playwright, not installed (decision D-09)"
     assert len({h.name for h in d.hosts}) == len(d.hosts), "duplicate host"
     for p in [*d.vocabularies, d.test_set]:
