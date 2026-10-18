@@ -1,3 +1,4 @@
+.PHONY: up index eval test dev api web
 up:     ; docker compose up -d --build
 index:  ; docker compose run --rm api navigator index --domain $(DOMAIN)
 eval:   ; docker compose run --rm api navigator eval --domain $(DOMAIN) --split $(or $(SPLIT),dev)
