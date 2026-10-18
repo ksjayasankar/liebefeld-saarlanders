@@ -29,6 +29,13 @@ make dev ARGS="index --domain medtech"     # or the single steps: extract, enric
 make test
 ```
 
+**Demo on a Mac.** Docker on macOS cannot use the Apple GPU, so searches in the api container take about 30 s per need. For a demo, run the API on the host with `TORCH_DEVICE=mps` (about 3 s per need) and the front end from Vite:
+
+```bash
+make api      # http://localhost:8000
+make web      # http://localhost:5173, proxies /api to port 8000
+```
+
 ## Sovereignty
 
 Apertus is the only language model. It is reached through an OpenAI-compatible address (`APERTUS_BASE_URL`), so it moves from the hackathon gateway to a self-hosted vLLM server with no code change. Embeddings (BGE-M3) and the reranker (bge-reranker-v2-m3) are open-weights models running locally. No other outside service is used at run time.

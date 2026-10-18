@@ -5,3 +5,4 @@ test:   ; DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib .venv/bin/python -m pytes
 # Host-side development (decision D-03): make dev ARGS="fetch --domain medtech"
 dev:    ; set -a && . ./.env && set +a && DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib .venv/bin/navigator $(ARGS)
 api:    ; set -a && . ./.env && set +a && DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib .venv/bin/python -m uvicorn navigator.api:app --port 8000
+web:    ; cd web && npm run dev
