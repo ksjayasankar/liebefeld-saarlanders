@@ -5,6 +5,7 @@ import threading
 import time
 import uuid
 from collections import defaultdict, deque
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
@@ -17,7 +18,7 @@ from fastapi.responses import JSONResponse, Response, StreamingResponse
 from psycopg import sql
 from psycopg.types.json import Jsonb
 
-from . import apertus, db, embed, explain, needcard, pdf, rank
+from . import apertus, db, embed, explain, live, needcard, pdf, rank
 from .config import env, load_domain
 from .models import (Draft, DraftRequest, FeedbackRequest, Health, Introduction, IntroductionRequest, NeedCard, PdfText,
                      SearchRequest, SearchResult)
@@ -106,7 +107,10 @@ def stored(conn, request_id: uuid.UUID) -> dict:
 def result(conn, row: dict, adjust: rank.Adjust | None, message: str | None, progress=lambda event: None) -> SearchResult:
     card = NeedCard(**row["need_card"])
     r = rank.rank(conn, STATE["domains"][row["domain"]], card, adjust, progress)
-    explain.explain_all(conn, r.leads, progress)
+    with ThreadPoolExecutor(1) as ex:   # the live check (D-32) runs while Apertus writes the explanations
+        checked = ex.submit(live.check, STATE["domains"][row["domain"]], r.leads, progress)
+        explain.explain_all(conn, r.leads, progress)
+        checked.result()
     out = SearchResult(request_id=row["id"], domain=row["domain"], build_id=row["build_id"], card=card, groups=r.groups,
                        covered=r.covered, uncovered=r.uncovered, coverage_line=r.coverage_line, message=message)
     conn.execute("UPDATE app.requests SET leads = %s WHERE id = %s", (Jsonb(out.model_dump(mode="json")), row["id"]))
@@ -149,7 +153,7 @@ def search(domain: str, body: SearchRequest, request: Request):
 
 @app.post("/api/{domain}/search/stream")
 def search_stream(domain: str, body: SearchRequest, request: Request):
-    """D-30: the same search as NDJSON, one line per step ({"step": "expand"|"retrieve"|"rerank"|"select"|"explain", ...}),
+    """D-30: the same search as NDJSON, one line per step ({"step": "expand"|"retrieve"|"rerank"|"select"|"explain"|"verify", ...}),
     then {"step": "result", "result": SearchResult} or {"step": "error", "detail": ...}."""
     domain_of(domain)
     limit(request)

@@ -5,6 +5,7 @@ import json
 import re
 import time
 from collections import deque
+from contextlib import AsyncExitStack
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import urljoin, urlsplit, urlunsplit
@@ -70,16 +71,42 @@ def links(url: str, html: str, host: str) -> list[str]:
     return [normalise_url(u) for u in (urljoin(url, h) for h in hrefs) if keep_link(host, u)]
 
 
+RENDER_WAIT_MS = 15_000
+BLOCKED = ("image", "media", "font")   # a rendered page needs its HTML, scripts and data, not its pictures
+
+
+async def browser(stack: AsyncExitStack, user_agent: str):
+    """D-31: one headless Chromium for the hosts marked `render: browser`, closed with the fetch run."""
+    from playwright.async_api import async_playwright
+    pw = await stack.enter_async_context(async_playwright())
+    chromium = await pw.chromium.launch()
+    stack.push_async_callback(chromium.close)
+    ctx = await chromium.new_context(user_agent=user_agent)
+    await ctx.route("**/*", lambda r: r.abort() if r.request.resource_type in BLOCKED else r.continue_())
+    return ctx
+
+
 class HostFetcher:
-    def __init__(self, conn, client: httpx.AsyncClient, host: Host, cap: int, refresh: bool):
-        self.conn, self.client, self.host, self.cap, self.refresh = conn, client, host, cap, refresh
+    def __init__(self, conn, client: httpx.AsyncClient, host: Host, cap: int, refresh: bool, browser=None, main: str | None = None):
+        self.conn, self.client, self.host, self.cap, self.refresh, self.browser = conn, client, host, cap, refresh, browser
+        self.main = main   # rendered pages are read once this content area exists
         self.name, self.last, self.count, self.started = host.name, 0.0, 0, time.time()
         self.rows = {r["url"]: r for r in conn.execute("SELECT * FROM dataset.pages WHERE host = %s", (self.name,))}
 
-    async def get(self, url: str, headers: dict | None = None) -> httpx.Response:
+    async def get(self, url: str, headers: dict | None = None, render: bool = False) -> httpx.Response:
+        """One request per second per host. `render`: the page as the browser shows it after its scripts ran."""
         await asyncio.sleep(max(0.0, self.last + 1.0 - time.time()))
         self.last = time.time()
-        return await self.client.get(url, headers=headers or {})
+        if not render:
+            return await self.client.get(url, headers=headers or {})
+        page = await self.browser.new_page()
+        try:
+            r = await page.goto(url, wait_until="load", timeout=60_000)   # not networkidle: videos and polling never go quiet
+            # the content area, or 15 s after navigation: some pages render none (skipped at extraction by skip_without)
+            await page.wait_for_function(f"document.querySelector({json.dumps(self.main)}) || performance.now() > {RENDER_WAIT_MS}")
+            return httpx.Response(r.status, content=(await page.content()).encode(), request=httpx.Request("GET", page.url))
+        finally:
+            await page.close()
 
     def due(self, url: str) -> bool:
         row = self.rows.get(url)
@@ -117,7 +144,7 @@ class HostFetcher:
         """Fetch or re-check one HTML page; returns its HTML when the page is (still) on this host."""
         row = self.rows.get(url)
         cond = {k: v for k, v in (("If-None-Match", row and row["etag"]), ("If-Modified-Since", row and row["last_modified"])) if v}
-        r = await self.get(url, cond)
+        r = await self.get(url, cond, render=self.host.render is not None)   # no conditional requests in a browser
         if r.status_code == 304:
             self.mark(url, gone=False)
             return raw_path(self.name, url).read_text()
@@ -168,10 +195,12 @@ async def run(domain: Domain, refresh: bool, only: list[str] | None):
     assert hosts, f"no host matches {only}"
     headers = {"User-Agent": env("FETCH_USER_AGENT")}
     with db.connect() as conn:
-        async with httpx.AsyncClient(headers=headers, timeout=30, follow_redirects=True) as client:
+        async with httpx.AsyncClient(headers=headers, timeout=30, follow_redirects=True) as client, AsyncExitStack() as stack:
+            ctx = await browser(stack, headers["User-Agent"]) if any(h.render for h in hosts) else None
+
             async def one(h: Host):
-                f = HostFetcher(conn, client, h, domain.max_pages_per_host, refresh)
                 t = domain.templates[h.template]
+                f = HostFetcher(conn, client, h, domain.max_pages_per_host, refresh, h.render and ctx, t.main)
                 if t.wp_api:
                     await f.wordpress(t.wp_api, t.wp_types)
                 else:

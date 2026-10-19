@@ -78,6 +78,16 @@ templates:
       - {card: ".team_loop_item", name: '[data-widget_type="theme-post-title.default"]',
          function: '[data-widget_type="text-editor.default"]', email: 'a[href^="mailto:"]'}
     page_types: {members: "/team/", news: "/news/|/blog/", other: ".*"}
+  sitem_insel:                   # sitem-insel AG (Nuxt; the HTML is empty until its scripts run: hosts use render: browser)
+    main: "main"                 # pages: a layout-2 block; news: hero, text and gallery parts
+    drop: ["main > footer", ".Breadcrumb"]
+    skip_without: "main"         # some pages render nothing (client-side not-found pages)
+    seeds: ["en/"]
+    lang_segment: 0
+    people:
+      - {card: "div.content:has(> h4.member-title)", name: "h4.member-title", function: "span.role",
+         email: ".member-details", phone: ".member-details"}
+    page_types: {members: "/our-people$", facility: "/catr|/room-booking", news: "/news-list/|/info/news|/events", other: ".*"}
 hosts:
   - {label: "Diabetes Center Berne (DCB)", url: "https://www.dcberne.com/", template: wordpress, priority: 1}
   - {label: "ARTORG Center for Biomedical Engineering Research", url: "https://www.artorg.unibe.ch/", template: unibe_portal, priority: 1}
@@ -163,6 +173,8 @@ hosts:
      allow_paths: ["^/swissmedic/en/home/medical-devices"]}
   - {label: "Innosuisse (Swiss Innovation Agency)", url: "https://www.innosuisse.admin.ch/", template: innosuisse, priority: 3,
      allow_paths: ["^/en/(?:support-offers|support-for-start-ups|project-set-up-assistance-and-networking|funding-for-national-projects|innovation-mentoring|innovation-cheques[a-z-]*|[a-z-]*coaching[a-z-]*|start-up-innovation-projects|approved-start-up-innovation-projects|flagship-initiative[a-z-]*|ongoing-flagships|life-sciences|supporting-sme-innovation|swiss-accelerator-innovation-projects)$"]}
+  - {label: "sitem-insel (Swiss Institute for Translational and Entrepreneurial Medicine)", url: "https://sitem-insel.ch/",
+     template: sitem_insel, priority: 2, render: browser, allow_paths: ["^/en/(?!community|login|files/|landingpages/)"]}   # landing pages: events and media kits, another layout
   - {label: "Switzerland Innovation Park Biel/Bienne (Swiss HealthTech Center)", url: "https://sipbb.ch/", template: sipbb, priority: 2,
      allow_paths: ["^/$", "^/(?:de/|fr/)?(?:park-biel-bienne/(?:team|tenants|partner)/|research-technology/|technology/|services/|our-ecosystem/|medtech-[a-z0-9-]+/)"]}
 vocabularies: [vocab/synonyms.json]   # MeSH 2026 + German MeSH + Wikidata labels, en/de/fr
