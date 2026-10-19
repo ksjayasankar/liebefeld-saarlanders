@@ -177,34 +177,30 @@ export function Activity({ needs, feed, task, started }) {
               )
             })}
             {leads.length > 0 && (
-              <li>
-                <Step state={checks.length < leads.length ? 'run' : 'done'}>
-                  <p>Checked {checks.length} of {leads.length} explanations against their sources</p>
-                  <ul className="space-y-1">
-                    {leads.map((name) => {
-                      const c = checks.find((e) => e.lead === name)
-                      return (
-                        <li key={name} className="flex items-center gap-2 text-ink/80">
-                          {c ? <Icon className={`size-3.5 ${c.supported ? 'text-emerald-600 dark:text-emerald-400' : 'text-ink/45'}`}>{c.supported ? <path d="m5 12 4.5 4.5L19 7" /> : <path d="M6 6l12 12M18 6 6 18" />}</Icon>
-                            : <span className="size-3.5" />}
-                          <span className="truncate">{name}</span>
-                          {c && <span className="sr-only">{c.supported ? 'confirmed' : 'not confirmed, no explanation shown'}</span>}
-                        </li>
-                      )
-                    })}
-                  </ul>
-                </Step>
-              </li>
+              <Step state={checks.length < leads.length ? 'run' : 'done'}>
+                <p>Checked {checks.length} of {leads.length} explanations against their sources</p>
+                <ul className="space-y-1">
+                  {leads.map((name) => {
+                    const c = checks.find((e) => e.lead === name)
+                    return (
+                      <li key={name} className="flex items-center gap-2 text-ink/80">
+                        {c ? <Icon className={`size-3.5 ${c.supported ? 'text-emerald-600 dark:text-emerald-400' : 'text-ink/45'}`}>{c.supported ? <path d="m5 12 4.5 4.5L19 7" /> : <path d="M6 6l12 12M18 6 6 18" />}</Icon>
+                          : <span className="size-3.5" />}
+                        <span className="truncate">{name}</span>
+                        {c && <span className="sr-only">{c.supported ? 'confirmed' : 'not confirmed, no explanation shown'}</span>}
+                      </li>
+                    )
+                  })}
+                </ul>
+              </Step>
             )}
             {verified.length > 0 && (
-              <li>
-                <Step state={searching ? 'run' : 'done'}>
-                  <p>Fetched {verified.length} quoted {verified.length === 1 ? 'page' : 'pages'} again to check the quotes are still there</p>
-                  <ul className="space-y-1">{verified.map((e) => <Page key={e.url} e={e} />)}</ul>
-                </Step>
-              </li>
+              <Step state={searching ? 'run' : 'done'}>
+                <p>Fetched {verified.length} quoted {verified.length === 1 ? 'page' : 'pages'} again to check the quotes are still there</p>
+                <ul className="space-y-1">{verified.map((e) => <Page key={e.url} e={e} />)}</ul>
+              </Step>
             )}
-            {searching && <li><Step state="run"><p className="shimmer">{next(feed, needs)}…</p></Step></li>}
+            {searching && <Step state="run"><p className="shimmer">{next(feed, needs)}…</p></Step>}
           </ol>
         )}
       </div>
