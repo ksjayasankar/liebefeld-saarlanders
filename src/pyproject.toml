@@ -26,6 +26,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.4"]
+render = ["playwright>=1.64"]   # hosts marked render: browser; then `playwright install --only-shell chromium`
 
 [project.scripts]
 navigator = "navigator.cli:main"

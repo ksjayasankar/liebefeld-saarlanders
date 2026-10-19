@@ -47,7 +47,7 @@ Apertus is the only language model. It is reached through an OpenAI-compatible a
 
 ## Adding a site
 
-Add one host line to `config/domains/medtech.yaml` and run `make index DOMAIN=medtech` again. Only the new host is fetched, and only its new pages are sent to Apertus and the embedding model.
+Add one host line to `config/domains/medtech.yaml` and run `make index DOMAIN=medtech` again. A site whose pages need JavaScript gets `render: browser`; it is fetched with headless Chromium (`pip install -e .[render]`, `playwright install --only-shell chromium`). Only the new host is fetched, and only its new pages are sent to Apertus and the embedding model.
 
 ## Data
 

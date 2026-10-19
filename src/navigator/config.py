@@ -2,6 +2,7 @@
 import os
 import re
 from pathlib import Path
+from typing import Literal
 from urllib.parse import urlsplit
 
 import yaml
@@ -59,7 +60,7 @@ class Host(Strict):
     allow_paths: list[str] | None = None  # regexes: only these paths are fetched (and crawled through)
     leaf_paths: list[str] = []       # regexes: fetched when linked from an allowed page, but their links are not followed
     role: str | None = None          # news: the host's pages are evidence of other units' work, the host is never a lead
-    render: str | None = None
+    render: Literal["browser"] | None = None   # pages need JavaScript: fetched with headless Chromium (D-31)
 
     @property
     def name(self) -> str:
@@ -109,7 +110,6 @@ def load_domain(domain_id: str) -> Domain:
         assert h.template in d.templates, f"host {h.url}: unknown template {h.template}"
         assert h.url.startswith("https://") and h.url.endswith("/"), f"host url {h.url}"
         assert h.role in (None, "news"), f"host {h.url}: unknown role {h.role}"
-        assert h.render is None, f"host {h.url}: render={h.render} needs Playwright, not installed (decision D-09)"
         for rx in [*(h.allow_paths or []), *h.leaf_paths, *(h.unit_paths or [])]:
             re.compile(rx)
     assert len({h.name for h in d.hosts}) == len(d.hosts), "duplicate host"

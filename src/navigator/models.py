@@ -64,6 +64,7 @@ class Reason(Strict):
     need_text: str
     sentence: str                         # quoted from the unit's own page
     url: str
+    live: Literal["found", "changed", "gone", "unreachable", "not_checked"] | None = None   # page fetched again at search time (D-32)
 
 
 class Item(Strict):
@@ -103,6 +104,7 @@ class Lead(Strict):
     url: str
     score: float
     page_count: int
+    checked_at: datetime | None = None    # when the quoted pages were fetched again (D-32)
 
 
 class LeadGroup(Strict):
