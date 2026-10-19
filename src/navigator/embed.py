@@ -1,6 +1,7 @@
 """Spec 5.6: BGE-M3 vectors and the bge-reranker-v2-m3 scores. One module for build and search."""
 import hashlib
 from functools import cache
+from threading import Lock
 
 import numpy as np
 import torch
@@ -13,6 +14,7 @@ RERANKER = ("BAAI/bge-reranker-v2-m3", "953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e
 MODEL_ID = "@".join(EMBEDDER)
 DIM = 1024
 CHUNK_MIN, CHUNK_MAX = 200, 350
+DEVICE = Lock()   # one model at a time on the torch device: MPS aborts the process when two threads use it (issue 71)
 
 
 @cache
@@ -28,7 +30,8 @@ def reranker():
 
 
 def encode(texts: list[str]) -> np.ndarray:
-    v = embedder().encode(texts, batch_size=32, normalize_embeddings=True, convert_to_numpy=True).astype(np.float32)
+    with DEVICE:
+        v = embedder().encode(texts, batch_size=32, normalize_embeddings=True, convert_to_numpy=True).astype(np.float32)
     assert v.shape == (len(texts), DIM) and np.allclose(np.linalg.norm(v, axis=1), 1, atol=1e-3)
     return v
 
@@ -55,7 +58,8 @@ def cached(conn, texts: list[str], batch: int = 512) -> np.ndarray:
 
 
 def rerank(query: str, texts: list[str]) -> np.ndarray:
-    scores = reranker().predict([(query, t) for t in texts], batch_size=16, activation_fn=torch.nn.Sigmoid(), convert_to_numpy=True)
+    with DEVICE:
+        scores = reranker().predict([(query, t) for t in texts], batch_size=16, activation_fn=torch.nn.Sigmoid(), convert_to_numpy=True)
     return np.asarray(scores, dtype=np.float32)
 
 

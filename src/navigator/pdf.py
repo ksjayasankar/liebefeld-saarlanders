@@ -4,7 +4,6 @@ Docling (local, MIT) reads the PDF's text layer in reading order (columns, lists
 without a text layer, such as scanned pages and text inside images. Page headers and footers are left out."""
 from functools import cache
 from io import BytesIO
-from threading import Lock
 
 from docling.datamodel.accelerator_options import AcceleratorOptions
 from docling.datamodel.base_models import ConversionStatus, DocumentStream, InputFormat
@@ -12,10 +11,10 @@ from docling.datamodel.pipeline_options import EasyOcrOptions, PdfPipelineOption
 from docling.document_converter import DocumentConverter, PdfFormatOption
 
 from .config import env
+from .embed import DEVICE
 
 MAX_BYTES, MAX_PAGES, TIMEOUT = 10_000_000, 40, 120   # a business model or pitch deck; seconds per document
 OCR_LANGS = ["en", "de", "fr"]
-LOCK = Lock()   # one conversion at a time: the layout, table and OCR models are shared
 
 
 @cache
@@ -33,7 +32,7 @@ def text(data: bytes) -> tuple[str, int]:
         raise ValueError("the file is not a PDF")
     if len(data) > MAX_BYTES:
         raise ValueError(f"the PDF is larger than {MAX_BYTES // 1_000_000} MB")
-    with LOCK:
+    with DEVICE:   # Docling's layout, table and OCR models run on the same device as the search models
         r = converter().convert(DocumentStream(name="upload.pdf", stream=BytesIO(data)), raises_on_error=False,
                                 max_num_pages=MAX_PAGES, max_file_size=MAX_BYTES)
     if r.status != ConversionStatus.SUCCESS:   # partial success (timeout, unreadable page) is a failure: no silent gaps
