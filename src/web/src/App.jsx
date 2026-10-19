@@ -24,7 +24,7 @@ export default function App() {
   const [draft, setDraft] = useState(null)
   const [card, setCard] = useState(null)
   const [result, setResult] = useState(null)
-  const [task, setTask] = useState(null)         // 'draft' | 'search' | 'rerank' while a call runs
+  const [task, setTask] = useState(null)         // 'draft' | 'search' | 'rerank' | 'pdf' while a call runs
   const [error, setError] = useState(null)
   const end = useRef(null)
   useEffect(() => { api('/api/health').then(setHealth, setError) }, [])
@@ -64,7 +64,7 @@ export default function App() {
   return (
     <>
       {!enquiry
-        ? <Landing health={health} onStart={start} />
+        ? <Landing health={health} onStart={start} run={run} />
         : <>
             <TopBar busy={busy} onHome={reset}>
               <p className="hidden min-w-0 flex-1 truncate border-l border-line/15 pl-3 text-sm text-ink/70 sm:block">{title}</p>

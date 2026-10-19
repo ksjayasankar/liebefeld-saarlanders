@@ -181,3 +181,7 @@ One box with a Business model / Keyword switch replaces the two forms. Three mad
 ## DD-34 Feedback as thumbs plus one menu
 
 "More like this" and "Not relevant" are icon buttons, as in the template's answer card; the other five reasons sit in one select. Seven chips per lead were the noisiest part of the results.
+
+## DD-35 PDF upload as the prompt box's attach button
+
+The upload of DD-30 returns inside the landing prompt box as a paperclip icon button at the left of the footer, where Claude and ChatGPT put attach, and only in Business model mode. A PDF can also be dropped on the box. While it is read the file shows as a chip in the box with a spinner and sending is off; after reading the chip names the file and page count, and a line under it says everything in the box, including text hidden in the PDF, is what Apertus reads. The text is not sent until staff press send. Removing the chip keeps the text. Errors use the app's error card through `run('pdf', …)`. The box's limit is 20,000 characters, as in `DraftRequest`; above it the count turns red and send is disabled.
