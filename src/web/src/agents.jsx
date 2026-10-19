@@ -15,7 +15,7 @@ export function Icon({ children, className = 'size-4' }) {
 }
 
 export function AgentBadge({ id, className = 'size-8' }) {
-  return <span className={`${className} grid shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-200`}><Icon>{AGENTS[id].icon}</Icon></span>
+  return <span className={`${className} grid shrink-0 place-items-center rounded-lg border border-line/10 bg-surface text-ink/75`}><Icon>{AGENTS[id].icon}</Icon></span>
 }
 
 // Header of a block in the workspace thread: which agent produced it.
@@ -23,7 +23,7 @@ export function From({ ids, children }) {
   return (
     <div className="mb-3 flex items-center gap-2.5">
       <span className="flex -space-x-1.5">{ids.map((id) => <AgentBadge key={id} id={id} className="size-7 ring-2 ring-page" />)}</span>
-      <p className="text-sm font-semibold">{ids.map((id) => AGENTS[id].name).join(' · ')}</p>
+      <p className="text-sm font-semibold tracking-tight">{ids.map((id) => AGENTS[id].name).join(' · ')}</p>
       {children}
     </div>
   )
