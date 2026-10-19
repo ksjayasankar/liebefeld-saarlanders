@@ -44,6 +44,10 @@ Apertus is the only language model. It is reached through an OpenAI-compatible a
 
 Add one host line to `config/domains/medtech.yaml` and run `make index DOMAIN=medtech` again. A site whose pages need JavaScript gets `render: browser`; it is fetched with headless Chromium (`pip install -e .[render]`, `playwright install --only-shell chromium`). Only the new host is fetched, and only its new pages are sent to Apertus and the embedding model.
 
+## AI Usage
+
+We used Claude Code and ChatGPT to assist with the development of the product prototype and creating report drafts.
+
 ## Data
 
 Page text belongs to the institutions. The repository ships code and evaluation files only; the built index (`make dump`, `make restore`) is published separately as a release asset so the system runs without a crawl. `navigator snapshot export <dir>` and `navigator snapshot import <dir>` share the dataset and the model caches within the team. MeSH data: courtesy of the U.S. National Library of Medicine. German MeSH: ZB MED, CC BY 4.0. Wikidata: CC0.
