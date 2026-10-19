@@ -33,7 +33,7 @@ export default function Progress({ keyword, draft, card, feed, result, task }) {
   const needs = (finished ? result.card : card)?.needs ?? []
   const hosts = [...new Set(leads.map((l) => l.host))]
   const quotes = leads.flatMap((l) => l.reasons).filter((r) => r.live)
-  const pages = feed.filter((e) => e.step === 'verify').length
+  const pages = feed?.filter((e) => e.step === 'verify').length ?? 0   // no feed before the first search
   const step = searching ? 'run' : finished ? 'done' : 'wait'
   return (
     <div className="space-y-5 rounded-2xl border border-line/10 bg-card p-4 shadow-soft" role="status" aria-live="polite">
