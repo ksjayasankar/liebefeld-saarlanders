@@ -25,8 +25,9 @@ def explain(conn, lead: Lead) -> str | None:
     return s if support.supporting_lines(conn, s, lines) else None
 
 
-def explain_all(conn, leads: list[Lead]):
-    """In parallel; the gateway client limits concurrent calls (APERTUS_PARALLEL)."""
+def explain_all(conn, leads: list[Lead], progress=lambda event: None):
+    """In parallel; the gateway client limits concurrent calls (APERTUS_PARALLEL). One progress event per lead, in order."""
     with ThreadPoolExecutor(max(len(leads), 1)) as ex:
         for lead, s in zip(leads, ex.map(lambda l: explain(conn, l), leads)):
             lead.explanation = s
+            progress({"step": "explain", "lead": lead.name, "supported": s is not None})

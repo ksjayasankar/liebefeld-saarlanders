@@ -14,6 +14,7 @@ POOL, RRF_K, CONCEPT_BOOST, BEST_CHUNKS = 200, 60, 0.01, 3
 SHORTLIST, DIVERSITY, TIE_BAND = 10, 0.2, 0.05   # tie band relative to the best gain
 CANDIDATE_SHARE = 0.05  # a unit is a candidate if its best page chunk reaches this share of the need's best chunk score,
 MIN_CANDIDATES = 5      # or is among the need's 5 best units: one dominant page must not empty the list (issue 58)
+REASON_SHARE = 0.1     # a lead quotes a need only if it scores 10% of the lead's best need (no quotes for barely touched needs)
 COVER = 0.8   # coverage probability of a unit scored 1: the best unit leaves 20% of a need open, so relevance keeps ordering
 LIKE, DISLIKE = 0.75, 0.15
 STALE_AFTER = timedelta(days=3 * 365)
@@ -82,7 +83,8 @@ def candidates(conn, text: str, terms: list[str], labels: list[str], vec: np.nda
     return fused
 
 
-def rank(conn, domain: Domain, card: NeedCard, adjust: Adjust | None = None) -> Ranked:
+def rank(conn, domain: Domain, card: NeedCard, adjust: Adjust | None = None, progress=lambda event: None) -> Ranked:
+    """`progress` receives one dict per step, for the live feed of the streaming search (D-30)."""
     adjust = adjust or Adjust()
     conn.execute(sql.SQL("SET search_path TO {}, public").format(sql.Identifier(f"live_{domain.id}")))
     labels = conn.execute("SELECT concept_id, match_key FROM concept_labels").fetchall()
@@ -98,8 +100,12 @@ def rank(conn, domain: Domain, card: NeedCard, adjust: Adjust | None = None) -> 
         v = v + LIKE * _mean(unit_rows, adjust.liked.get(need.id), v) - DISLIKE * _mean(unit_rows, adjust.rejected.get(need.id), v)
         tags = concepts.tag(need.text, idx)
         tag_labels = [r["match_key"] for r in labels if r["concept_id"] in tags]
-        fused = candidates(conn, need.text, expand(conn, need.text), tag_labels, v / np.linalg.norm(v), tags)
+        terms = expand(conn, need.text)
+        progress({"step": "expand", "need": need.id, "terms": terms})
+        fused = candidates(conn, need.text, terms, tag_labels, v / np.linalg.norm(v), tags)
         rows = {r["id"]: r for r in conn.execute("SELECT id, unit_id, text, is_terms FROM chunks WHERE id = ANY(%s)", (list(fused),))}
+        hosts = [unit_rows[r["unit_id"]]["host"] for r in rows.values()]
+        progress({"step": "retrieve", "need": need.id, "passages": len(rows), "sites": sorted(set(hosts), key=hosts.count, reverse=True)})
         top, per = [], {}   # at most BEST_CHUNKS per unit go to the reranker, so the pool spans many units
         for c in sorted(fused, key=lambda c: (-fused[c], c)):
             u = rows[c]["unit_id"]
@@ -118,6 +124,8 @@ def rank(conn, domain: Domain, card: NeedCard, adjust: Adjust | None = None) -> 
         raw = {u: sum(sorted(ss, reverse=True)[:BEST_CHUNKS]) * adjust.category_weight.get(unit_rows[u]["category"], 1.0)
                for u, ss in per_unit.items()}
         top_raw = max(raw.values(), default=0.0)
+        progress({"step": "rerank", "need": need.id, "passages": len(top),
+                  "closest": [unit_rows[u]["name"] for u in sorted(raw, key=raw.get, reverse=True)[:5]]})
         unit_scores[need.id] = {u: s / top_raw for u, s in raw.items()} if top_raw else {}
         raw_best[need.id] = max((max(ss) for ss in per_unit.values()), default=0.0)
 
@@ -133,6 +141,7 @@ def rank(conn, domain: Domain, card: NeedCard, adjust: Adjust | None = None) -> 
         picked = select(scores, vecs @ vecs.T, np.array([unit_rows[u]["page_count"] for u in units]), SHORTLIST)
         leads = [_lead(conn, card, unit_rows[units[i]], best_chunk, scores[i], need_vecs) for i in picked]
         leads = [l for l in leads if not (adjust.hide_stale and l.stale)]
+        progress({"step": "select", "leads": [l.name for l in leads]})
     threshold = domain.coverage_threshold
     covered = [n.id for n in card.needs if raw_best[n.id] >= threshold]
     uncovered = [n.id for n in card.needs if raw_best[n.id] < threshold]
@@ -182,9 +191,13 @@ def _people(conn, card: NeedCard, unit_id: str, best_chunk: dict, need_vecs: lis
 
 
 def _lead(conn, card: NeedCard, unit: dict, best_chunk: dict, score_row: np.ndarray, need_vecs: list) -> Lead:
+    """Grouped under the category of the need it answers best, when staff set one, else the unit's own (issue 65)."""
+    have = [i for i, n in enumerate(card.needs) if (n.id, unit["id"]) in best_chunk]
+    best = max(have, key=lambda i: score_row[i])
     reasons, dates = [], []
-    for need in card.needs:
-        if (need.id, unit["id"]) not in best_chunk:
+    for i in have:
+        need = card.needs[i]
+        if score_row[i] < REASON_SHARE * score_row[best]:
             continue
         chunk = conn.execute("SELECT c.text, c.url, p.page_date FROM chunks c JOIN pages p USING (url) WHERE c.id = %s",
                              (best_chunk[(need.id, unit["id"])][1],)).fetchone()
@@ -192,7 +205,8 @@ def _lead(conn, card: NeedCard, unit: dict, best_chunk: dict, score_row: np.ndar
         dates.append(chunk["page_date"])
     items = conn.execute("SELECT kind, name, url FROM unit_items WHERE unit_id = %s ORDER BY kind, name LIMIT 5", (unit["id"],)).fetchall()
     page_date = max((d for d in dates if d), default=None)
-    return Lead(unit_id=unit["id"], name=unit["name"], parent=unit["parent"], host=unit["host"], category=unit["category"],
+    return Lead(unit_id=unit["id"], name=unit["name"], parent=unit["parent"], host=unit["host"],
+                category=card.needs[best].category or unit["category"],
                 summary=unit["summary"], expertise=unit["terms"], explanation=None, need_ids=[r.need_id for r in reasons], reasons=reasons,
                 items=[Item(**r) for r in items], people=_people(conn, card, unit["id"], best_chunk, need_vecs), page_date=page_date,
                 stale=bool(page_date and date.today() - page_date > STALE_AFTER), url=reasons[0].url,
