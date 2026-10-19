@@ -149,8 +149,9 @@ def call(conn, model: str, system: str, lines: list[str], instruction: str, sche
             schema.model_validate(answer, context={"lines": len(lines), "dropped": []})
         except Exception as e:
             raise AssertionError(f"invalid {schema.__name__} answer from {model}: {e}\n--- raw answer ---\n{text}") from e
-        conn.execute("INSERT INTO cache.model_calls (key, model, input, answer, latency_ms) VALUES (%s,%s,%s,%s,%s)",
-                     (key, model, user, json.dumps(answer), latency))
+        # ON CONFLICT: parallel explanations on one connection can miss the cache for the same prompt at once (issue 70)
+        conn.execute("INSERT INTO cache.model_calls (key, model, input, answer, latency_ms) VALUES (%s,%s,%s,%s,%s) "
+                     "ON CONFLICT (key) DO NOTHING", (key, model, user, json.dumps(answer), latency))
         conn.commit()
         row = {"answer": answer}
     ctx = {"lines": len(lines), "dropped": []}
