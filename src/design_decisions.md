@@ -165,3 +165,45 @@ The built CSS contains the reduced-motion rule and the `.dark` token block. The 
 ## DD-30 PDF upload in the prompt box
 
 The upload sits in the prompt box's footer as a ghost button ("Upload PDF") next to the character count, so pasting stays the main path and the box stays one surface. The file input is visually hidden inside a label, so it keeps keyboard focus and the focus ring. While the PDF is read, the usual status pill names the file. After reading, a brand-tinted note under the text names the file and page count and says that everything in the box, including text hidden in the PDF, is what Apertus reads. The count turns red above 20,000 characters and "Draft need card" is disabled until the text is shortened.
+
+## DD-31 Agent workspace: the template's landing page returns, the work screen becomes Cowork-like
+
+Agency staff know Claude Cowork, so the front end borrows its shape. Two screens, as in the template: a landing page (navbar, one headline, the prompt box, a preview card, a short "how it works" section, footer) and, after sending, a work screen with the thread on the left and a progress panel on the right. Supersedes DD-09 (no landing page) and DD-25 (one status pill); the PDF upload of DD-30 moves into the new prompt box. Header text cut to the product name; the agency name moved to the footer.
+
+## DD-32 Four named agents, each a real step
+
+Need Analyst (`needcard.py`, Apertus 8B), Scouts (`rank.py`, one row per need), Fact Checker (`explain.py` + support check, Apertus 70B) and Report Writer (`report.py`). Names and icons only; the pipeline is unchanged and stays deterministic. Every state in the panel is read from the API calls: running while the call runs, done with counts from its answer (needs drafted, leads per need, explanations confirmed out of leads, report link). No sub-step is shown that the API does not report; live sub-steps need the search endpoint to stream events, which is left for later. The landing page does not claim the Scouts run in parallel because `rank.rank` loops over needs one at a time.
+
+## DD-33 The prompt box carries both inputs
+
+One box with a Business model / Keyword switch replaces the two forms. Three made-up example business models fill the box in one click. The preview card draws leads as placeholder lines, so the page shows no invented unit or source.
+
+## DD-34 Feedback as thumbs plus one menu
+
+"More like this" and "Not relevant" are icon buttons, as in the template's answer card; the other five reasons sit in one select. Seven chips per lead were the noisiest part of the results.
+
+## DD-35 PDF upload as the prompt box's attach button
+
+The upload of DD-30 returns inside the landing prompt box as a paperclip icon button at the left of the footer, where Claude and ChatGPT put attach, and only in Business model mode. A PDF can also be dropped on the box. While it is read the file shows as a chip in the box with a spinner and sending is off; after reading the chip names the file and page count, and a line under it says everything in the box, including text hidden in the PDF, is what Apertus reads. The text is not sent until staff press send. Removing the chip keeps the text. Errors use the app's error card through `run('pdf', …)`. The box's limit is 20,000 characters, as in `DraftRequest`; above it the count turns red and send is disabled.
+
+## DD-36 Red theme and visual polish; supersedes the colours of DD-21
+
+Request: a red colour theme and a front end that looks finished rather than generated. The brand scale is now a restrained Swiss red (500 `#d23f32`, 600 `#b8291d`, 700 `#9a2219`): a Swiss red, slightly deep, not neon or pink. Primary buttons are 600 with white text (6.2:1), hover 700 (8.0:1). The neutrals move off the template's navy so nothing reads blue next to the red. Light mode is warm grey: page `#f8f7f5`, soft panels `#f1efec`, white cards, ink `#1c1a18`. Dark mode is near-black, not navy: page `#11100f`, panels `#181715`, cards `#1f1e1c`. The token names are unchanged, so components did not need new colours. Shadows lost their blue tint; the pill shadow is red. In dark mode, links and the focus ring use brand 400 (5.3:1 on cards).
+
+Red is used sparingly, as in DD-21: primary buttons, the logo mark, the headline accent, links, quote rules and the "Contact person" tag. Agent badges, need numbers, source chips and the re-rank message are neutral now. A screen full of red tints reads as a warning, and the feedback message should not look like an error. Errors share the red family with the brand, so the error card now carries an icon, a heavier left rule and the "The request failed." title. Colour alone never marks it. Amber (stale, left out) and emerald (done) are unchanged and still read clearly next to the red.
+
+Polish: one radius scale (pills full, fields and inner panels xl, cards 2xl, prompt box and preview 3xl). One elevation scale (soft for cards, panel for floating surfaces, pill only on primary buttons). Padding and gaps are on 4/8 px steps (p-4 person cards and panels, 12/24 px section gaps in lead cards). Hover, active and disabled states on every control, 150 ms transitions and a pointer cursor on buttons and selects. Kicker, footer and secondary text are at least 65% ink, so they meet 4.5:1 on panels. The blurred brand glow behind the hero is gone (a red haze reads pink and decorative), and with it the glass effect on the preview card. The theme menu is on the right at phone width too, and its buttons are 32 px. The progress panel no longer widens the page on phones (it caused horizontal scroll at 390 px).
+
+Not changed here: the prompt box (`PromptBox`) and the progress panel are being reworked in parallel. Their disabled send button, character count and the spinner use the tokens, so they follow the new palette.
+
+Verified in Chrome at 1280 px and 390 px (iframe), light and dark: landing, need card, the error card, and the results with a fictional search result injected into the page's `fetch`, because the local API went down during the check. `npx eslint . --max-warnings 0` and `npx vite build` pass.
+
+## DD-37 The search card follows the search stream, like ChatGPT's web search
+
+The Scouts and the Fact Checker report in the thread as the search runs, from `POST /search/stream` (D-30): per need the search terms, the passages and sites read, and the closest units after reranking; then one tick or cross per explanation check. The line after the last step shimmers with what runs next, a clock counts up, and the thread follows the feed. When the search ends the card folds into one line (terms, sites, explanations confirmed) that opens again; a search that ends in an error says so instead. Lists show their first few items as chips and the rest as a count. Supersedes the "left for later" note in DD-32 and the rejection of shimmering text in DD-24, which the user asked for.
+
+## DD-38 Live check of quoted pages on each quote and in the search card
+
+Each quote in a lead card carries the result of the live check (D-32) next to its source chip: "Checked live 11:17" with a tick when the page still has the quote, an amber warning ("Quote no longer on the page", "Page gone") when it changed or is gone, and a neutral tag when the page did not answer or its host is read with a browser and so is not checked. The time comes from `Lead.checked_at`; hovering shows the full date. Quotes in person cards and results stored before D-32 have no `live` value and show no badge. The search card adds a step per `verify` event: the pages fetched again, each with a tick, a warning or a dash, and the folded line and the Fact Checker note add "n of m quotes found live".
+
+Verified in Chrome against the local API with build 20261019T085810Z: two keyword searches, all quotes found. The warning states were not seen live; they follow the same code path.

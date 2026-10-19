@@ -3,37 +3,37 @@
 /* Dark mode follows the "dark" class on <html> (set by index.html and Theme.jsx), as in the AI-template. */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Design tokens from the AI-template (its tailwind.config.js): brand blues, semantic surfaces, Inter, shadows, motion. */
+/* Design tokens, after the AI-template (its tailwind.config.js): a restrained Swiss red, warm neutrals, Inter, shadows, motion. */
 @theme {
-  --color-brand-50: #eef1fd;
-  --color-brand-100: #dde3fb;
-  --color-brand-200: #b9c5f5;
-  --color-brand-300: #94a6ee;
-  --color-brand-400: #6f86e4;
-  --color-brand-500: #4c64d6;
-  --color-brand-600: #3e51c2;
-  --color-brand-700: #33429f;
-  --color-brand-800: #2b377f;
-  --color-brand-900: #232d63;
+  /* Brand red. White text meets 4.5:1 from 500 up (600: 6.2:1, 700: 8.0:1). */
+  --color-brand-50: #fdf3f2;
+  --color-brand-100: #fbe5e3;
+  --color-brand-200: #f6c9c4;
+  --color-brand-300: #ee9f97;
+  --color-brand-400: #e26b5f;
+  --color-brand-500: #d23f32;
+  --color-brand-600: #b8291d;
+  --color-brand-700: #9a2219;
+  --color-brand-800: #7d1e17;
+  --color-brand-900: #661b15;
 
-  /* Light values; .dark below swaps them for the navy theme. */
-  --color-ink: rgb(20 27 52);       /* main text */
-  --color-page: rgb(247 248 252);   /* page background */
-  --color-surface: rgb(241 243 249);/* soft grey panels */
-  --color-field: rgb(244 246 251);  /* input boxes */
+  /* Light values: warm neutral greys, so nothing reads blue next to the red. .dark below swaps them for near-black. */
+  --color-ink: rgb(28 26 24);       /* main text */
+  --color-page: rgb(248 247 245);   /* page background */
+  --color-surface: rgb(241 239 236);/* soft grey panels */
+  --color-field: rgb(245 244 242);  /* input boxes */
   --color-card: rgb(255 255 255);   /* cards, chips, menus */
-  --color-line: rgb(20 27 52);      /* borders, used with low opacity */
+  --color-line: rgb(28 26 24);      /* borders, used with low opacity */
 
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
 
-  --shadow-pill: 0 1px 0 rgba(255, 255, 255, 0.35) inset, 0 6px 16px -4px rgba(62, 81, 194, 0.55);
+  --shadow-pill: 0 1px 0 rgba(255, 255, 255, 0.35) inset, 0 4px 12px -4px rgba(184, 41, 29, 0.5);
   --shadow-soft: var(--shadow-soft-value);
   --shadow-panel: var(--shadow-panel-value);
 
   --animate-ring: ring 1.4s ease-out infinite;
   --animate-breathe: breathe 1.4s ease-in-out infinite;
   --animate-pop: pop 0.35s ease-out both;
-  --animate-drift: drift 18s ease-in-out infinite;
   --animate-fade-up: fade-up 0.5s ease-out both;
   @keyframes ring {
     0% { transform: scale(1); opacity: 0.55; }
@@ -48,10 +48,6 @@
     70% { opacity: 1; transform: translateY(0) scale(1.06); }
     100% { opacity: 1; transform: translateY(0) scale(1); }
   }
-  @keyframes drift {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    50% { transform: translate(3%, -2%) scale(1.05); }
-  }
   @keyframes fade-up {
     from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
@@ -59,17 +55,17 @@
 }
 
 :root {
-  --shadow-soft-value: 0 1px 2px rgb(20 27 52 / 0.05), 0 4px 16px -6px rgb(20 27 52 / 0.12);
-  --shadow-panel-value: 0 1px 2px rgb(20 27 52 / 0.06), 0 16px 40px -16px rgb(35 45 99 / 0.28);
+  --shadow-soft-value: 0 1px 2px rgb(28 26 24 / 0.05), 0 4px 12px -6px rgb(28 26 24 / 0.1);
+  --shadow-panel-value: 0 1px 2px rgb(28 26 24 / 0.06), 0 16px 40px -16px rgb(28 26 24 / 0.22);
   color-scheme: light;
 }
 .dark {
-  --color-ink: rgb(226 231 243);
-  --color-page: rgb(11 18 38);
-  --color-surface: rgb(16 25 50);
-  --color-field: rgb(20 30 60);
-  --color-card: rgb(17 27 54);
-  --color-line: rgb(165 180 220);
+  --color-ink: rgb(236 235 232);
+  --color-page: rgb(17 16 15);
+  --color-surface: rgb(24 23 21);
+  --color-field: rgb(38 36 34);
+  --color-card: rgb(31 30 28);
+  --color-line: rgb(214 211 206);
   --shadow-soft-value: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px -6px rgb(0 0 0 / 0.5);
   --shadow-panel-value: 0 1px 2px rgb(0 0 0 / 0.35), 0 16px 40px -16px rgb(0 0 0 / 0.7);
   color-scheme: dark;
@@ -77,25 +73,46 @@
 
 @layer base {
   body { @apply bg-page font-sans text-[15px] leading-relaxed text-ink antialiased; }
-  :focus-visible { @apply outline-2 outline-offset-2 outline-brand-500; }
+  :focus-visible { @apply outline-2 outline-offset-2 outline-brand-500 dark:outline-brand-400; }
+  button:not(:disabled), select:not(:disabled), summary, label:has(> input[type="file"]) { cursor: pointer; }
   @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
   @media (prefers-reduced-motion: reduce) {
     *, ::before, ::after { animation: none !important; transition: none !important; }
   }
 }
 
+/* One scale: pills rounded-full, fields and inner panels rounded-xl, cards rounded-2xl, the prompt box and preview rounded-3xl.
+   Elevation: shadow-soft for cards, shadow-panel for floating surfaces, shadow-pill only on primary buttons. */
 @layer components {
   .card { @apply rounded-2xl border border-line/10 bg-card p-5 shadow-soft sm:p-6; }
-  .field { @apply h-10 w-full rounded-xl border border-line/15 bg-field px-3 text-ink transition-colors placeholder:text-ink/45 focus:border-brand-500; }
+  .field { @apply h-10 w-full rounded-xl border border-line/15 bg-field px-3 text-ink transition-colors duration-150 placeholder:text-ink/50 hover:border-line/25 focus:border-brand-500 dark:focus:border-brand-400; }
   .label { @apply mb-1.5 block text-sm font-medium; }
   .hint { @apply text-sm text-ink/65; }
-  .kicker { @apply text-xs font-medium tracking-wider text-ink/60 uppercase; }
-  .btn { @apply inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-brand-600 px-5 py-2 text-sm font-medium text-white shadow-pill transition hover:bg-brand-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none; }
-  .btn-ghost { @apply inline-flex shrink-0 items-center justify-center rounded-full border border-line/15 bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-surface disabled:cursor-not-allowed disabled:opacity-50; }
-  .chip { @apply rounded-full border border-line/15 bg-card px-3 py-1 text-sm transition-colors hover:border-brand-400 hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:text-brand-200; }
-  .tag { @apply rounded-full bg-surface px-2.5 py-0.5 text-xs font-medium text-ink/80 ring-1 ring-line/10 ring-inset; }
-  .tag-brand { @apply rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-medium text-brand-700 dark:bg-brand-500/15 dark:text-brand-200; }
-  .warn { @apply rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-amber-600/20 ring-inset dark:bg-amber-400/10 dark:text-amber-200; }
-  .link { @apply font-medium text-brand-600 underline-offset-2 hover:underline dark:text-brand-300; }
-  .source { @apply inline-flex max-w-full items-center gap-1 rounded-full border border-line/15 bg-card px-2 py-0.5 text-xs font-medium text-brand-700 transition-colors hover:border-brand-400 dark:text-brand-200; }
+  .kicker { @apply text-xs font-medium tracking-wider text-ink/65 uppercase; }
+  .btn { @apply inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full bg-brand-600 px-5 text-sm font-medium text-white shadow-pill transition duration-150 hover:bg-brand-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none; }
+  .btn-ghost { @apply inline-flex shrink-0 items-center justify-center gap-2 rounded-full border border-line/15 bg-card px-4 py-2 text-sm font-medium transition duration-150 hover:border-line/25 hover:bg-surface active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50; }
+  .chip { @apply rounded-full border border-line/15 bg-card px-3 py-1 text-sm text-ink/80 transition-colors duration-150 hover:border-brand-300 hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:border-brand-400/60 dark:hover:text-brand-300; }
+  .tag { @apply inline-flex items-center rounded-full bg-surface px-2.5 py-0.5 text-xs font-medium text-ink/80 ring-1 ring-line/10 ring-inset; }
+  .tag-brand { @apply inline-flex items-center rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-medium text-brand-700 ring-1 ring-brand-600/15 ring-inset dark:bg-brand-500/15 dark:text-brand-200 dark:ring-brand-400/20; }
+  .warn { @apply inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-amber-600/20 ring-inset dark:bg-amber-400/10 dark:text-amber-200; }
+  .link { @apply rounded-sm font-medium text-brand-700 underline-offset-2 transition-colors duration-150 hover:text-brand-800 hover:underline dark:text-brand-400 dark:hover:text-brand-300; }
+  .source { @apply inline-flex max-w-full items-center gap-1 rounded-full border border-line/15 bg-card px-2 py-0.5 text-xs font-medium text-ink/75 transition-colors duration-150 hover:border-brand-300 hover:text-brand-700 dark:hover:border-brand-400/60 dark:hover:text-brand-300; }
+  /* Errors share the red family with the brand, so they always carry an icon and a title, never colour alone. */
+  .error-title { @apply flex items-center gap-2 font-semibold text-red-700 dark:text-red-300; }
+  .error-title::before {
+    content: "";
+    @apply size-[1.125rem] shrink-0 bg-current;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7.5v5.5M12 16.5v.01'/%3E%3C/svg%3E") center / contain no-repeat;
+  }
+}
+
+/* ChatGPT-style shimmer on the line an agent is working on (DD-35); static text under reduced motion. */
+@keyframes shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+@layer components {
+  .shimmer {
+    background: linear-gradient(90deg, var(--color-ink) 40%, color-mix(in srgb, var(--color-ink) 30%, transparent) 50%, var(--color-ink) 60%) 0 0 / 200% 100%;
+    background-clip: text;
+    color: transparent;
+    animation: shimmer 2.2s linear infinite;
+  }
 }
