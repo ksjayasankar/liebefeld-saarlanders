@@ -10,7 +10,9 @@ INSTRUCTION = """Return: {"sector": "...", "product": "one line",
          "stage": "idea|prototype|clinical_testing|on_market",
          "needs": [{"text": "one sentence", "category": "research_partner|facility|clinical_validation|licensing|support|talent", "sources": [sentence numbers]}]}
 At most 5 needs, only needs the sentences state; every need cites at least one sentence number.
-Each need must be something a university group, facility or programme could help with."""
+Each need must be something a university group, facility or programme could help with.
+One need per need the sentences state, one topic each; keep every one, including regulatory approval and funding.
+Each need is searched on its own, so where it helps, name the product's technology and the disease or patients in it, in the sentences' words."""
 
 
 def draft(conn, description: str) -> Draft:

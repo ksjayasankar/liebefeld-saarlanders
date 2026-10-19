@@ -1,5 +1,7 @@
 """Spec 6.1: stateless FastAPI app. Everything lives in Postgres; the browser only displays what this returns."""
 import json
+import queue
+import threading
 import time
 import uuid
 from collections import defaultdict, deque
@@ -11,7 +13,7 @@ from typing import Annotated
 from fastapi import Body, FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import JSONResponse, Response, StreamingResponse
 from psycopg import sql
 from psycopg.types.json import Jsonb
 
@@ -101,10 +103,10 @@ def stored(conn, request_id: uuid.UUID) -> dict:
     return row
 
 
-def result(conn, row: dict, adjust: rank.Adjust | None, message: str | None) -> SearchResult:
+def result(conn, row: dict, adjust: rank.Adjust | None, message: str | None, progress=lambda event: None) -> SearchResult:
     card = NeedCard(**row["need_card"])
-    r = rank.rank(conn, STATE["domains"][row["domain"]], card, adjust)
-    explain.explain_all(conn, r.leads)
+    r = rank.rank(conn, STATE["domains"][row["domain"]], card, adjust, progress)
+    explain.explain_all(conn, r.leads, progress)
     out = SearchResult(request_id=row["id"], domain=row["domain"], build_id=row["build_id"], card=card, groups=r.groups,
                        covered=r.covered, uncovered=r.uncovered, coverage_line=r.coverage_line, message=message)
     conn.execute("UPDATE app.requests SET leads = %s WHERE id = %s", (Jsonb(out.model_dump(mode="json")), row["id"]))
@@ -142,10 +144,41 @@ def search(domain: str, body: SearchRequest, request: Request):
     domain_of(domain)
     limit(request)
     with STATE["pool"].connection() as conn:
-        row = conn.execute("INSERT INTO app.requests VALUES (%s,%s,%s,%s,'{}',%s) RETURNING *",
-                           (uuid.uuid4(), domain, build_id(conn, domain), Jsonb(body.card.model_dump(mode="json")),
-                            datetime.now(timezone.utc))).fetchone()
-        return result(conn, row, None, None)
+        return result(conn, new_request(conn, domain, body.card), None, None)
+
+
+@app.post("/api/{domain}/search/stream")
+def search_stream(domain: str, body: SearchRequest, request: Request):
+    """D-30: the same search as NDJSON, one line per step ({"step": "expand"|"retrieve"|"rerank"|"select"|"explain", ...}),
+    then {"step": "result", "result": SearchResult} or {"step": "error", "detail": ...}."""
+    domain_of(domain)
+    limit(request)
+    events: queue.Queue = queue.Queue()
+
+    def work():
+        try:
+            with STATE["pool"].connection() as conn:
+                out = result(conn, new_request(conn, domain, body.card), None, None, events.put)
+            events.put({"step": "result", "result": out.model_dump(mode="json")})
+        except Exception as e:   # reported in the stream as it is, like the error middleware does
+            print(f"[{request.state.id}] {type(e).__name__}: {e}", flush=True)
+            events.put({"step": "error", "detail": f"{type(e).__name__}: {e}", "request_id": request.state.id})
+
+    def lines():
+        while True:
+            e = events.get()
+            yield json.dumps(e) + "\n"
+            if e["step"] in ("result", "error"):
+                return
+
+    threading.Thread(target=work, daemon=True).start()
+    return StreamingResponse(lines(), media_type="application/x-ndjson")
+
+
+def new_request(conn, domain: str, card: NeedCard) -> dict:
+    return conn.execute("INSERT INTO app.requests VALUES (%s,%s,%s,%s,'{}',%s) RETURNING *",
+                        (uuid.uuid4(), domain, build_id(conn, domain), Jsonb(card.model_dump(mode="json")),
+                         datetime.now(timezone.utc))).fetchone()
 
 
 def adjust_from(feedback: list[dict]) -> rank.Adjust:
