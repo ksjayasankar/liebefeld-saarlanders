@@ -22,8 +22,8 @@ export function Source({ href, delay = 0 }) {
 export function Quote({ reason, delay = 0 }) {
   return (
     <figure className="animate-fade-up" style={{ animationDelay: `${delay}ms` }}>
-      <blockquote className="border-l-2 border-brand-400 pl-3 leading-relaxed">“{reason.sentence}”</blockquote>
-      <figcaption className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 pl-3.5 text-xs text-ink/65">
+      <blockquote className="border-l-2 border-brand-500/60 pl-3 leading-relaxed">“{reason.sentence}”</blockquote>
+      <figcaption className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 pl-3.5 text-xs text-ink/65">
         <span>For: {reason.need_text}</span>
         <Source href={reason.url} delay={delay + 150} />
       </figcaption>

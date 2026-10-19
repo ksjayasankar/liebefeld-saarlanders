@@ -181,3 +181,15 @@ One box with a Business model / Keyword switch replaces the two forms. Three mad
 ## DD-34 Feedback as thumbs plus one menu
 
 "More like this" and "Not relevant" are icon buttons, as in the template's answer card; the other five reasons sit in one select. Seven chips per lead were the noisiest part of the results.
+
+## DD-35 Red theme and visual polish; supersedes the colours of DD-21
+
+Request: a red colour theme and a front end that looks finished rather than generated. The brand scale is now a restrained Swiss red (500 `#d23f32`, 600 `#b8291d`, 700 `#9a2219`): a Swiss red, slightly deep, not neon or pink. Primary buttons are 600 with white text (6.2:1), hover 700 (8.0:1). The neutrals move off the template's navy so nothing reads blue next to the red. Light mode is warm grey: page `#f8f7f5`, soft panels `#f1efec`, white cards, ink `#1c1a18`. Dark mode is near-black, not navy: page `#11100f`, panels `#181715`, cards `#1f1e1c`. The token names are unchanged, so components did not need new colours. Shadows lost their blue tint; the pill shadow is red. In dark mode, links and the focus ring use brand 400 (5.3:1 on cards).
+
+Red is used sparingly, as in DD-21: primary buttons, the logo mark, the headline accent, links, quote rules and the "Contact person" tag. Agent badges, need numbers, source chips and the re-rank message are neutral now. A screen full of red tints reads as a warning, and the feedback message should not look like an error. Errors share the red family with the brand, so the error card now carries an icon, a heavier left rule and the "The request failed." title. Colour alone never marks it. Amber (stale, left out) and emerald (done) are unchanged and still read clearly next to the red.
+
+Polish: one radius scale (pills full, fields and inner panels xl, cards 2xl, prompt box and preview 3xl). One elevation scale (soft for cards, panel for floating surfaces, pill only on primary buttons). Padding and gaps are on 4/8 px steps (p-4 person cards and panels, 12/24 px section gaps in lead cards). Hover, active and disabled states on every control, 150 ms transitions and a pointer cursor on buttons and selects. Kicker, footer and secondary text are at least 65% ink, so they meet 4.5:1 on panels. The blurred brand glow behind the hero is gone (a red haze reads pink and decorative), and with it the glass effect on the preview card. The theme menu is on the right at phone width too, and its buttons are 32 px. The progress panel no longer widens the page on phones (it caused horizontal scroll at 390 px).
+
+Not changed here: the prompt box (`PromptBox`) and the progress panel are being reworked in parallel. Their disabled send button, character count and the spinner use the tokens, so they follow the new palette.
+
+Verified in Chrome at 1280 px and 390 px (iframe), light and dark: landing, need card, the error card, and the results with a fictional search result injected into the page's `fetch`, because the local API went down during the check. `npx eslint . --max-warnings 0` and `npx vite build` pass.

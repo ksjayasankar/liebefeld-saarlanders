@@ -27,7 +27,7 @@ export default function Theme() {
     <div role="group" aria-label="Colour theme" className="flex shrink-0 rounded-full border border-line/15 bg-card p-0.5">
       {Object.entries(ICONS).map(([t, icon]) => (
         <button key={t} type="button" aria-pressed={theme === t} aria-label={`${t[0].toUpperCase()}${t.slice(1)} theme`} onClick={() => setTheme(t)}
-          className="grid size-7 place-items-center rounded-full text-ink/60 transition-colors hover:text-ink aria-pressed:bg-surface aria-pressed:text-ink">
+          className="grid size-8 place-items-center rounded-full text-ink/60 transition-colors duration-150 hover:text-ink aria-pressed:bg-surface aria-pressed:text-ink aria-pressed:ring-1 aria-pressed:ring-line/10 aria-pressed:ring-inset">
           <svg aria-hidden="true" viewBox="0 0 24 24" className="size-4 fill-none stroke-current stroke-[1.8] [stroke-linecap:round] [stroke-linejoin:round]">{icon}</svg>
         </button>
       ))}

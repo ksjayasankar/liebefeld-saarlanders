@@ -11,7 +11,7 @@ import TopBar from './TopBar.jsx'
 function Enquiry({ text }) {
   const [open, setOpen] = useState(false)
   return (
-    <div className="ml-auto max-w-2xl animate-fade-up rounded-3xl rounded-br-md bg-surface px-4 py-3">
+    <div className="ml-auto max-w-2xl animate-fade-up rounded-2xl rounded-br-md border border-line/10 bg-surface px-4 py-3">
       <p className={`whitespace-pre-wrap ${open ? '' : 'line-clamp-4'}`}>{text}</p>
       {text.length > 300 && <button type="button" className="link mt-1 text-sm" onClick={() => setOpen(!open)}>{open ? 'Show less' : 'Show all'}</button>}
     </div>
@@ -71,7 +71,7 @@ export default function App() {
               <button type="button" className="btn-ghost ml-auto px-3.5 py-1.5 sm:ml-0" onClick={reset} disabled={busy}>New enquiry</button>
             </TopBar>
             <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 lg:grid-cols-[minmax(0,1fr)_19rem] lg:py-8" aria-busy={busy}>
-              <aside className="lg:sticky lg:top-20 lg:order-2 lg:self-start" aria-label="Agents">
+              <aside className="min-w-0 lg:sticky lg:top-20 lg:order-2 lg:self-start" aria-label="Agents">
                 <Progress keyword={enquiry.keyword} draft={draft} card={card} result={result} task={task} />
               </aside>
               <main className="min-w-0 space-y-8">
@@ -89,12 +89,12 @@ export default function App() {
           </>}
 
       {error && (
-        <div role="alert" className="fixed inset-x-4 bottom-4 z-20 mx-auto max-h-[50vh] max-w-2xl animate-fade-up overflow-auto rounded-2xl border border-red-600/40 bg-card p-4 shadow-panel">
-          <div className="flex items-start justify-between gap-3">
-            <p className="font-semibold text-red-700 dark:text-red-300">The request failed.</p>
+        <div role="alert" className="fixed inset-x-4 bottom-4 z-20 mx-auto max-h-[50vh] max-w-2xl animate-fade-up overflow-auto rounded-2xl border border-red-600/30 border-l-4 border-l-red-600 bg-card p-4 shadow-panel dark:border-red-400/30 dark:border-l-red-400">
+          <div className="flex items-center justify-between gap-3">
+            <p className="error-title">The request failed.</p>
             <button type="button" className="btn-ghost px-3 py-1" onClick={() => setError(null)}>Dismiss</button>
           </div>
-          <pre className="mt-2 text-sm break-words whitespace-pre-wrap">{error.message}</pre>
+          <pre className="mt-3 rounded-xl bg-surface p-3 text-sm break-words whitespace-pre-wrap">{error.message}</pre>
           {error.requestId && <p className="mt-2 text-sm">Request id: <code>{error.requestId}</code></p>}
         </div>
       )}
