@@ -1,0 +1,4 @@
+# Pages whose text addresses an AI system (spec section 4, check 5.9).
+# Each flagged URL must be listed as excluded (dropped from the build) or cleared (reviewed, harmless).
+excluded: []
+cleared: []

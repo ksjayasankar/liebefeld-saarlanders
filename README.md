@@ -1,4 +1,4 @@
-# Hack Apertus Liebefeld — `challenge name`, `team name`
+# Hack Apertus Liebefeld — Research & Expertise Navigator, Saarlanders
 
 Template repository for [Hack Apertus](https://hackapertus.ch/) submissions.
 Every project keeps the same layout, so organizers and judges find the same
@@ -9,14 +9,18 @@ There are 3 challenges to pick from:
 2. OpenParlData: Topic classification for Swiss parliaments with Apertus
 3. University of Bern: Deciphering Archives with Apertus
 
-`One paragraph describing the challenge.`
+We picked challenge 1. A company considering Bern sends the Bern Economic Development Agency its business model. Agency staff paste it or upload it as a PDF; Apertus v1.5 8B drafts the company's needs, staff confirm them, and the Navigator returns research groups, people and contact persons, facilities and support programmes at the University of Bern, the Diabetes Center Berne, Inselspital and related sites. Every claim quotes and links the public page it comes from, and Apertus v1.5 70B checks each explanation against its source. Two PDF reports follow: an internal review and a report for the company.
+
+**Run it:** see [`src/README.md`](src/README.md) and section 7 of the [technical report](technical_report.md). In short: `cd src && cp .env.example .env` (set `DB_PASSWORD` and `LLM_API_KEY`), `make restore`, `make up`, open http://localhost:8080.
+
+**Team Saarlanders:** Jayasankar Kumar Santhirani, Deivanai Shankar, Amina Aneefa, Jesmilan Jesu. Report: [`Saarlanders_Report.pdf`](Saarlanders_Report.pdf).
 
 Submissions must use the v1.5 Apertus model family.
 The submission must comply with the [HackApertus T&C](https://hackapertus.ch/terms-and-conditions).
 
 ## 🎯 The Challenge
 
-`Fill in the title of the challenge you picked and link the Notion challenge page (URL)`
+Bern Economic Development Agency: Research & Expertise Navigator — [hackapertus.notion.site/bern-economic-development-agency](https://hackapertus.notion.site/bern-economic-development-agency)
 
 ## 🔧 Resources & Tools
 

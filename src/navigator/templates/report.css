@@ -1,0 +1,50 @@
+/* Layout after finalreport/*.tex: A4, sans serif 10 pt, both logos in the header, Bern red rules, grey cards. */
+:root { --red: #E30613; --ink: #1A1A1A; --slate: #4A5568; --panel: #F8FAFC; --line: #E2E8F0; }
+@page {
+  size: A4; margin: 30mm 20mm 23mm;
+  @top-center { content: element(header); width: 100%; vertical-align: bottom; }
+  @bottom-left { content: "Standortförderung Kanton Bern"; font: 8.5pt "Helvetica Neue", Helvetica, Arial, sans-serif; color: #4A5568;
+                 border-top: .4pt solid #1A1A1A; width: 140mm; padding-top: 2mm; vertical-align: top; }
+  @bottom-right { content: "Page " counter(page); font: 8.5pt "Helvetica Neue", Helvetica, Arial, sans-serif; color: #4A5568;
+                  border-top: .4pt solid #1A1A1A; width: 30mm; text-align: right; padding-top: 2mm; vertical-align: top; }
+}
+body.internal { page: internal; }
+@page internal { @bottom-left { content: "CONFIDENTIAL | Standortförderung Kanton Bern"; font-weight: bold; } }
+
+body { font-family: "Helvetica Neue", Helvetica, Arial, "Liberation Sans", "DejaVu Sans", sans-serif; font-size: 10pt; line-height: 1.45; color: var(--ink); }
+.header { position: running(header); display: flex; justify-content: space-between; align-items: flex-end;
+          border-bottom: .4pt solid var(--ink); padding-bottom: 2mm; }
+.header img { height: 11mm; }
+
+.title { text-align: center; margin: 2mm 0 8mm; }
+.kicker { color: var(--red); font-weight: bold; font-size: 9pt; text-transform: uppercase; letter-spacing: .04em; margin: 0 0 1.5mm; }
+h1 { font-size: 24pt; margin: 0 0 2mm; }
+.sub { color: var(--slate); font-size: 12pt; margin: 0; }
+.sub .meta { font-size: 9pt; }
+
+h2 { font-size: 14pt; margin: 8mm 0 4mm; padding-bottom: 1.5mm; border-bottom: 1pt solid var(--red); break-after: avoid; }
+h3 { font-size: 11pt; margin: 0 0 .5mm; }
+h3.group { color: var(--slate); margin: 5mm 0 2.5mm; break-after: avoid; }
+p { margin: 0 0 2mm; }
+
+.card { background: var(--panel); border: 1pt solid var(--line); border-radius: 4pt; padding: 4mm; margin: 0 0 4mm; break-inside: avoid; }
+.box { background: var(--panel); border: 1pt solid var(--line); border-radius: 4pt; padding: 4mm; }
+.meta { color: var(--slate); font-size: 9pt; }
+.explanation { font-weight: bold; }
+blockquote { margin: 0 0 2mm; padding-left: 3mm; border-left: 1.5pt solid var(--red); }
+.for { color: var(--slate); font-size: 8.5pt; }
+.flag { color: #9A3412; font-weight: bold; }
+.tag { font-size: 8pt; color: var(--red); }
+.person { margin-top: 2mm; }
+
+table { width: 100%; border-collapse: collapse; margin: 0 0 3mm; }
+th, td { text-align: left; vertical-align: top; padding: 1.5mm 2mm 1.5mm 0; border-bottom: .5pt solid var(--line); }
+th { font-size: 9pt; color: var(--slate); }
+table.people { font-size: 9pt; margin-top: 2mm; }
+table.people td:last-child { width: 40%; word-break: break-all; }
+tr.gap td { color: #9A3412; }
+.coverage { font-weight: bold; }
+ol.needs li, ul.facts li { margin-bottom: 1.5mm; }
+
+sup { font-size: 6.5pt; color: var(--red); }
+.sources { font-size: 7.5pt; color: var(--slate); word-break: break-all; }

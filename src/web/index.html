@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>XpertVS · Research &amp; Expertise Navigator</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <script>
+      // Theme before first paint (as in the AI-template); the stored choice is only a per-browser convenience.
+      {
+        let t = null;
+        try { t = localStorage.getItem('navigator-theme'); } catch { /* storage blocked: follow the system */ }
+        if (t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

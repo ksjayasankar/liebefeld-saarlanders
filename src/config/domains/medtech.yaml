@@ -1,0 +1,201 @@
+# Domain pack: the only place where medtech appears (spec section 3).
+id: medtech                      # also names the database schema: live_medtech
+label: Medical technology
+languages: [en, de, fr]
+max_pages_per_host: 1500
+templates:
+  unibe_portal:                  # the shared UniBE web system
+    main: "main#content"
+    seeds: ["index_eng.html", "index_ger.html"]
+    skip_without: "main"         # folder and link-list pages have no <main> at all
+    people:                      # schema.org Person markup (D-26)
+      - {card: '.team-box[itemtype$="schema.org/Person"]', name: "dd", function: ".jobTitle", link: "dd a[href]",
+         email: "[itemprop=email]", phone: "[itemprop=telephone]"}
+      - {card: '.team-detail[itemtype$="schema.org/Person"]', name: "[itemprop=name]", function: "[itemprop=jobTitle]",
+         affiliation: "[itemprop=name] ~ p:not([itemprop])", email: "[itemprop=email]", phone: "[itemprop=telephone]"}
+    drop: ["aside.contact-box", ".social-share", ".mdl-teaser_element", ".modal"]
+    unit_paths:                  # /research/<code>/ is a unit; listing folders are not
+      - "^/(?:research|forschung)/(?:platforms/|plattformen/|research_groups/|forschungsgruppen/|groups/|gruppen/)?(?!(?:publications|publikationen|projects|projekte|topics|themen|news|jobs|emeriti|ehemalige|former_[a-z_]+|ehemalige_forschungsgruppen|research_insights|preise_und_ehrungen|awards|platforms|plattformen|research_groups|forschungsgruppen|groups|gruppen)/)([a-z0-9_]+)/"
+    page_types:
+      members: "/(?:group_members|team(?:/[a-z0-9_]+)?|mitarbeitende|people|personen)/index_(?:eng|ger|fra)\\.html$"
+      person: "/(?:persons|staff|personen|personen_all_[a-z_]+|group_members|team|mitarbeitende|people)/"
+      facility: "/(?:services|dienstleistungen|platforms|plattformen|core_facilities)/"
+      project: "/(?:projects|projekte|research_activities|forschungsaktivitaeten)/"
+      news: "/(?:news|news_and_events|aktuell|medienmitteilungen|media_releases)/"
+      other: ".*"
+    alumni_headings: ["Alumni", "Former members", "Former Members", "Ehemalige", "Ehemalige Mitarbeitende"]
+  wordpress:
+    wp_api: /wp-json/wp/v2/
+    wp_types: [project, pages, posts]   # publication posts carry no content
+    unit_paths: ["^/en/focus-area-([a-z0-9-]+)/"]   # DCB focus areas
+    page_types: {project: "^project$", news: "^post$", other: ".*"}
+    strip_patterns: ["\\[/?et_pb_[^\\]]*\\]"]   # Divi page-builder shortcodes
+  insel_typo3:                   # Inselspital clinic sites and inselgruppe.ch (TYPO3); language in the first path segment
+    main: 'main[role="main"]'
+    seeds: ["de/lehre-und-forschung", "de/ueber-uns/teams"]
+    lang_segment: 0
+    people:
+      - {card: ".wrapper__person", name: ".person__title-name a.name", function: "span.position", link: ".person__title-name a.name"}
+    page_types: {members: "/ueber-uns/teams/", person: "/details/person/", project: "/forschung", other: ".*"}
+  bfh:                           # Bern University of Applied Sciences (Magnolia), research areas only
+    main: 'div.main[role="main"]'
+    drop: [".comp-navigation-bar", ".page-header__anchor-links", ".comp-teaser-list-managed-for-configured-teaser",
+           ".comp-quick-link-list", ".comp-search-results", ".comp-sharelinks"]
+    seeds: ["en/research/"]
+    lang_segment: 0
+    people:
+      - {card: "div.teas-contact-teaser", name: "h2.teaser-name", function: "ul.teaser-text-list li",
+         link: 'a[href*="/about-bfh/people/"]', phone: ":has(> i.icon-link_phone)"}
+    page_types: {members: "/contacts/$", person: "/about-bfh/people/", project: "/research-projects/|/projects/",
+                 facility: "/range-services/|consulting-services", news: "/news/", other: ".*"}
+  be_advanced:                   # canton of Bern start-up and SME support (TYPO3); German pages have no language prefix
+    main: "main.main"            # not bare main: a modal is a second <main>
+    drop: [".t8_team__filter", ".t8_team-list__footer"]
+    seeds: [""]
+    lang_segment: 0
+    default_lang: de
+    people:
+      - {card: ".t8_team-list__item", name: ".t8_team-list__title", function: ".t8_team-list__description"}
+    page_types: {news: "/stories|/news", other: ".*"}
+  swissmedic:                    # the federal regulator (AEM); language in the second path segment
+    main: "div#content"
+    seeds: ["swissmedic/en/home/medical-devices.html"]
+    date_format: "%Y-%m-%d"
+    lang_segment: 1
+    page_types: {other: ".*"}
+  innosuisse:                    # the federal innovation agency (Nuxt, rendered on the server)
+    main: "main#main-content"
+    seeds: ["en/support-offers", "en/support-for-start-ups", "en/life-sciences"]
+    lang_segment: 0
+    page_types: {other: ".*"}
+  sipbb:                         # Switzerland Innovation Park Biel/Bienne (WordPress + Elementor, crawled as HTML); English has no prefix
+    main: "main#content"
+    skip_without: "main#content"   # Elementor landing pages have no content area
+    seeds: ["", "park-biel-bienne/team/"]
+    lang_segment: 0
+    default_lang: en
+    people:
+      - {card: ".team_loop_item", name: '[data-widget_type="theme-post-title.default"]',
+         function: '[data-widget_type="text-editor.default"]', email: 'a[href^="mailto:"]'}
+    page_types: {members: "/team/", news: "/news/|/blog/", other: ".*"}
+  sitem_insel:                   # sitem-insel AG (Nuxt; the HTML is empty until its scripts run: hosts use render: browser)
+    main: "main"                 # pages: a layout-2 block; news: hero, text and gallery parts
+    drop: ["main > footer", ".Breadcrumb"]
+    skip_without: "main"         # some pages render nothing (client-side not-found pages)
+    seeds: ["en/"]
+    lang_segment: 0
+    people:
+      - {card: "div.content:has(> h4.member-title)", name: "h4.member-title", function: "span.role",
+         email: ".member-details", phone: ".member-details"}
+    page_types: {members: "/our-people$", facility: "/catr|/room-booking", news: "/news-list/|/info/news|/events", other: ".*"}
+hosts:
+  - {label: "Diabetes Center Berne (DCB)", url: "https://www.dcberne.com/", template: wordpress, priority: 1}
+  - {label: "ARTORG Center for Biomedical Engineering Research", url: "https://www.artorg.unibe.ch/", template: unibe_portal, priority: 1}
+  - {label: "Media Relations, University of Bern", url: "https://mediarelations.unibe.ch/", template: unibe_portal, priority: 2, role: news}
+  - {label: "Faculty of Medicine", url: "https://www.medizin.unibe.ch/", template: unibe_portal, priority: 2}
+  - {label: "Astronomical Institute", url: "https://www.aiub.unibe.ch/", template: unibe_portal, priority: 2}
+  - {label: "Physikalisches Institut", url: "https://www.phinst.unibe.ch/", template: unibe_portal, priority: 2}
+  - {label: "Institute of Cell Biology", url: "https://www.izb.unibe.ch/", template: unibe_portal, priority: 2}
+  - {label: "Centre for Development and Environment (CDE)", url: "https://www.cde.unibe.ch/", template: unibe_portal, priority: 2}
+  - {label: "Oeschger Centre for Climate Change Research (OCCR)", url: "https://www.oeschger.unibe.ch/", template: unibe_portal, priority: 2}
+  - {label: "Bern Center for Precision Medicine (BCPM)", url: "https://www.bcpm.unibe.ch/", template: unibe_portal, priority: 2}
+  - {label: "Department for BioMedical Research DBMR", url: "https://www.dbmr.unibe.ch/", template: unibe_portal, priority: 2,
+     unit_paths: ["^/(?:research|forschung)/(?:research_programs|forschungsprogramme)/([a-z0-9_]+)/"]}
+  - {label: "Next Generation Sequencing (NGS) Platform", url: "https://www.ngs.unibe.ch/", template: unibe_portal, priority: 2}
+  - {label: "Institut für Medizingeschichte", url: "https://www.img.unibe.ch/", template: unibe_portal, priority: 2}
+  - {label: "Faculty of Science", url: "https://www.philnat.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Vetsuisse-Fakultät (Veterinärmedizin)", url: "https://www.vetsuisse.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Institute of Sociology", url: "https://www.soz.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Institute of Psychology", url: "https://www.psy.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Mathematical Institute", url: "https://www.math.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Department of Physics and Astronomy", url: "https://www.physik.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Biology", url: "https://www.biology.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Institute of Ecology and Evolution", url: "https://www.iee.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Institute of Plant Sciences", url: "https://www.ips.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Institute of Geological Sciences", url: "https://www.geo.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Theodor Kocher Institute (TKI)", url: "https://www.tki.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Institute of Forensic Medicine", url: "https://www.irm.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Institute for Infectious Diseases", url: "https://www.ifik.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Institute of Social and Preventive Medicine (ISPM)", url: "https://www.ispm.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Institute of Complementary and Integrative Medicine", url: "https://www.ikim.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Institute of Biochemistry and Molecular Medicine", url: "https://www.ibmm.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Institute of Pharmacology", url: "https://www.pki.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Institute of Computer Science", url: "https://www.inf.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Institute for Theoretical Physics", url: "https://www.itp.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Institute of Applied Physics", url: "https://www.iap.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Department of Chemistry, Biochemistry and Pharmaceutical Sciences", url: "https://www.dcbp.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Center for Space and Habitability (CSH)", url: "https://www.csh.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Microscopy Imaging Center", url: "https://www.mic.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Neuroscience Bern", url: "https://www.neuroscience.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Abteilung Veterinär-Anatomie", url: "https://www.ita.vetsuisse.unibe.ch/", template: unibe_portal, priority: 3}
+  # Added after the host survey (D-27): UniBE hosts on the same portal
+  - {label: "Department of Clinical Research (DCR), incl. Clinical Trials Unit (CTU Bern)", url: "https://dcr.unibe.ch/", template: unibe_portal, priority: 1,
+     unit_paths: ["^/research/research_groups/([a-z0-9_]+)/", "^/services/([a-z0-9_]+)/"]}
+  - {label: "sitem-insel School (Translational and Entrepreneurial Medicine)", url: "https://www.sitem.unibe.ch/", template: unibe_portal, priority: 2}
+  - {label: "Department of Digital Medicine (DDM)", url: "https://ddm.unibe.ch/", template: unibe_portal, priority: 2,
+     unit_paths: ["^/research/research_programs/([a-z0-9_]+)/"]}
+  - {label: "Institute of Tissue Medicine and Pathology (IGMP)", url: "https://www.igmp.unibe.ch/", template: unibe_portal, priority: 2}
+  - {label: "Cardiovascular Research Cluster Bern (CVRC)", url: "https://www.cvrc.unibe.ch/", template: unibe_portal, priority: 2}
+  - {label: "School of Dental Medicine (zmk bern)", url: "https://www.zmk.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "ZMK Reconstructive Dentistry", url: "https://www.rege.zmk.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Institute of Sport Science (ISPW)", url: "https://www.ispw.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Department of Physiology", url: "https://www.physiologie.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Institute of Anatomy", url: "https://www.ana.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Bern Institute of Primary Health Care (BIHAM)", url: "https://www.biham.unibe.ch/", template: unibe_portal, priority: 3}
+  - {label: "Interfaculty Bioinformatics Unit", url: "https://www.bioinformatics.unibe.ch/", template: unibe_portal, priority: 3}
+  # Outside UniBE, from the host survey (D-27). allow_paths keep the crawl on research, team and support pages
+  - {label: "Department of Cardiology, Inselspital", url: "https://kardiologie.insel.ch/", template: insel_typo3, priority: 2,
+     allow_paths: ["^/(?:de|fr|en)/(?:lehre-und-forschung|forschung|ueber-uns/teams)"], leaf_paths: ["^/(?:de|fr|en)/ueber-uns/details/person/"]}
+  - {label: "Heart and Vascular Center, Inselspital", url: "https://herzgefaesszentrum.insel.ch/", template: insel_typo3, priority: 2,
+     allow_paths: ["^/(?:de|fr|en)/(?:lehre-und-forschung|forschung|ueber-uns/teams)"], leaf_paths: ["^/(?:de|fr|en)/ueber-uns/details/person/"]}
+  - {label: "Department of Orthopaedic Surgery and Traumatology, Inselspital", url: "https://orthopaedie.insel.ch/", template: insel_typo3, priority: 2,
+     allow_paths: ["^/(?:de|fr|en)/(?:lehre-und-forschung|forschung|ueber-uns/teams)"], leaf_paths: ["^/(?:de|fr|en)/ueber-uns/details/person/"]}
+  - {label: "Department of Neurology, Inselspital", url: "https://neurologie.insel.ch/", template: insel_typo3, priority: 2,
+     allow_paths: ["^/(?:de|fr|en)/(?:lehre-und-forschung|forschung|ueber-uns/teams)"], leaf_paths: ["^/(?:de|fr|en)/ueber-uns/details/person/"]}
+  - {label: "Department of Diabetes, Endocrinology, Nutritional Medicine and Metabolism (UDEM), Inselspital", url: "https://udem.insel.ch/", template: insel_typo3, priority: 2,
+     allow_paths: ["^/(?:de|fr|en)/(?:lehre-und-forschung|forschung|ueber-uns/teams)"], leaf_paths: ["^/(?:de|fr|en)/ueber-uns/details/person/"]}
+  - {label: "Department of ENT, Head and Neck Surgery, Inselspital", url: "https://hno.insel.ch/", template: insel_typo3, priority: 2, seeds: ["de/forschung"],
+     allow_paths: ["^/(?:de|fr|en)/(?:lehre-und-forschung|forschung|ueber-uns/teams)"], leaf_paths: ["^/(?:de|fr|en)/ueber-uns/details/person/"]}
+  - {label: "Sports Medicine, Inselspital", url: "https://sportmedizin.insel.ch/", template: insel_typo3, priority: 2,
+     seeds: ["de/research", "de/ueber-das-zentrum/team"], allow_paths: ["^/(?:de|fr|en)/(?:research|ueber-das-zentrum/team)"]}
+  - {label: "Insel Gruppe: Teaching and Research", url: "https://inselgruppe.ch/", template: insel_typo3, priority: 2,
+     seeds: ["de/lehre-und-forschung", "de/die-insel-gruppe/organisation/direktion-technologie-und-innovation",
+             "de/die-insel-gruppe/organisation/direktion-lehre-und-forschung"],
+     allow_paths: ["^/(?:de|fr)/lehre-und-forschung", "^/(?:de|fr)/die-insel-gruppe/organisation/direktion-(?:lehre-und-forschung|technologie-und-innovation)"]}
+  - {label: "Bern University of Applied Sciences (BFH)", url: "https://www.bfh.ch/", template: bfh, priority: 2,
+     seeds: ["en/research/research-areas/institute-human-centered-engineering/", "en/research/research-areas/centre-for-health-technologies/", "en/research/research-areas/institute-medical-informatics-i4mi/", "en/research/research-areas/institute-for-patient-centered-digital-health/", "en/research/research-areas/rehabilitation-technology/", "en/research/research-areas/roboticslab/", "en/research/research-areas/microlab/", "en/research/research-areas/institute-applied-laser-photonics-surface-technologies/", "en/research/research-areas/laser-surface-engineering/", "en/research/research-areas/plasma-surface-engineering/", "en/research/research-areas/thin-films-surfaces/", "en/research/research-areas/digital-health-innovation-field/", "en/research/research-areas/quality-healthcare-innovation-field/", "en/research/research-areas/physiotherapy-research/", "en/research/research-areas/foot-biomechanics-and-technology/", "en/research/research-areas/spinal-movement-biomechanics/", "en/research/research-areas/sports-technology/", "en/research/research-areas/pelvic-floor-health/", "en/research/research-areas/pain-stress-thermoregulation/", "en/research/research-areas/applied-machine-intelligence/", "en/research/research-areas/institute-intelligente-industrielle-systeme-i3s/", "en/research/research-areas/nursing-research/", "en/research/research-areas/nutrition-dietetics-research/"],
+     allow_paths: ["^/en/research/research-areas/(?:institute-human-centered-engineering|centre-for-health-technologies|institute-medical-informatics-i4mi|institute-for-patient-centered-digital-health|rehabilitation-technology|roboticslab|microlab|institute-applied-laser-photonics-surface-technologies|laser-surface-engineering|plasma-surface-engineering|thin-films-surfaces|digital-health-innovation-field|quality-healthcare-innovation-field|physiotherapy-research|foot-biomechanics-and-technology|spinal-movement-biomechanics|sports-technology|pelvic-floor-health|pain-stress-thermoregulation|applied-machine-intelligence|institute-intelligente-industrielle-systeme-i3s|nursing-research|nutrition-dietetics-research)/"],
+     leaf_paths: ["^/en/research/research-projects/", "^/en/about-bfh/people/"],
+     unit_paths: ["^/en/research/research-areas/([a-z0-9-]+)/"]}
+  - {label: "be-advanced (start-up and SME support of the canton of Bern)", url: "https://be-advanced.ch/", template: be_advanced, priority: 2,
+     allow_paths: ["^/(?!(?:fr/)?(?:stories|histoires)/)"]}   # 1,200 start-up stories: not the support offer itself
+  - {label: "Swissmedic: medical devices", url: "https://www.swissmedic.ch/", template: swissmedic, priority: 3,
+     allow_paths: ["^/swissmedic/en/home/medical-devices"]}
+  - {label: "Innosuisse (Swiss Innovation Agency)", url: "https://www.innosuisse.admin.ch/", template: innosuisse, priority: 3,
+     allow_paths: ["^/en/(?:support-offers|support-for-start-ups|project-set-up-assistance-and-networking|funding-for-national-projects|innovation-mentoring|innovation-cheques[a-z-]*|[a-z-]*coaching[a-z-]*|start-up-innovation-projects|approved-start-up-innovation-projects|flagship-initiative[a-z-]*|ongoing-flagships|life-sciences|supporting-sme-innovation|swiss-accelerator-innovation-projects)$"]}
+  - {label: "sitem-insel (Swiss Institute for Translational and Entrepreneurial Medicine)", url: "https://sitem-insel.ch/",
+     template: sitem_insel, priority: 2, render: browser, allow_paths: ["^/en/(?!community|login|files/|landingpages/)"]}   # landing pages: events and media kits, another layout
+  - {label: "Switzerland Innovation Park Biel/Bienne (Swiss HealthTech Center)", url: "https://sipbb.ch/", template: sipbb, priority: 2,
+     allow_paths: ["^/$", "^/(?:de/|fr/)?(?:park-biel-bienne/(?:team|tenants|partner)/|research-technology/|technology/|services/|our-ecosystem/|medtech-[a-z0-9-]+/)"]}
+vocabularies: [vocab/synonyms.json]   # MeSH 2026 + German MeSH + Wikidata labels, en/de/fr
+coverage_threshold: 0.2          # starting value; tune on the development queries
+report_sections:                 # public report pages, written by Apertus 70B with a source per sentence (spec 5.8)
+  clinical_validation:
+    title: Clinical studies and validation in Bern
+    brief: Where a medical technology company in Bern can run or prepare clinical studies and validate a device, and which services exist for that.
+    sources:
+      - https://www.dcberne.com/en/offering/
+      - https://www.artorg.unibe.ch/services/clinical_research_database/index_eng.html
+      - https://www.dbmr.unibe.ch/research/research_programs/index_eng.html
+  regulatory_route:
+    title: Regulatory route and translation support
+    brief: What the public sources say about bringing a medical device to market, regulatory steps, and support for translation and start-ups in Bern.
+    sources:
+      - https://www.dcberne.com/en/dcb-newsletter-8-23-inside-dcb-understanding-the-regulatory-landscape/
+      - https://www.artorg.unibe.ch/studies/entrepreneurial_classes_sitem_insel_school/index_eng.html
+      - https://mediarelations.unibe.ch/media_releases/2025/media_releases_2025/innosuisse_flagship_initiatives/index_eng.html
+report_banned: [world-class, world-leading, leading, best, unique, excellent, renowned, outstanding, cutting-edge,
+  state-of-the-art, unrivalled, premier, better than, compared to, Zurich, Zürich, Geneva, Genève, Basel, Lausanne,
+  Lucerne, Luzern, St. Gallen, Lugano, Winterthur, Aargau, Vaud, Ticino, Valais, Neuchâtel, Fribourg, Solothurn, Zug,
+  Schwyz, Thurgau, Graubünden, Jura]
+test_set: eval/

@@ -1,0 +1,13 @@
+query_id,wording
+Q1,"CGM, continuous glucose monitoring, biosensing, wearable sensing, metabolic monitoring"
+Q2,"automated insulin delivery, AID, closed loop, insulin dosing algorithms"
+Q3,"carbohydrate counting, nutrient estimation from images, dietary assessment"
+Q4,"microbiome, microbiota, metaflammation, immunometabolism"
+Q5,"organ-on-chip, alveolar barrier model, microfluidics, in vitro respiratory model"
+Q6,"glioblastoma MRI, medical image analysis, deep learning segmentation"
+Q7,"hearing implant, inner ear, otology, auditory pathway"
+Q8,"bone fragility, HR-pQCT, finite element bone model, hip fracture"
+Q9,"haemodynamics, cardiovascular fluid dynamics, microcirculation"
+Q10,"polarimetry, polarization imaging, intraoperative optical imaging"
+Q11,"nocturnal hypoglycaemia, smartwatch, radar, breath VOC"
+Q12,"clinical study design, Swissethics submission, CTU"

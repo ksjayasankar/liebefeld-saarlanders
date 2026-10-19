@@ -1,0 +1,17 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+data/
+eval/results/
+web/node_modules/
+web/dist/
+~$*
+.pytest_cache/
+!web/.env
+data - downloaded/
+.DS_Store
+navigator.egg-info/
+
+# Postgres dump of the built index (make dump), published as a release asset
+index.dump
