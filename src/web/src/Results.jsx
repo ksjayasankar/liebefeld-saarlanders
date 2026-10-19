@@ -1,5 +1,5 @@
 import { api } from './api.js'
-import { From, Icon } from './agents.jsx'
+import { Icon } from './agents.jsx'
 import { ACTIONS } from './labels.js'
 import { Ext, Quote, Source } from './parts.jsx'
 
@@ -101,7 +101,6 @@ export default function Results({ result, setResult, run, busy }) {
 
   return (
     <section id="leads" className="animate-fade-up scroll-mt-20" aria-label="Leads">
-      <From ids={['scout', 'checker']} />
       <div className="space-y-8">
         <div className="space-y-2">
           <p className="rounded-xl border border-line/10 bg-surface px-4 py-3 text-sm">{result.coverage_line}</p>

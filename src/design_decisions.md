@@ -197,3 +197,7 @@ Polish: one radius scale (pills full, fields and inner panels xl, cards 2xl, pro
 Not changed here: the prompt box (`PromptBox`) and the progress panel are being reworked in parallel. Their disabled send button, character count and the spinner use the tokens, so they follow the new palette.
 
 Verified in Chrome at 1280 px and 390 px (iframe), light and dark: landing, need card, the error card, and the results with a fictional search result injected into the page's `fetch`, because the local API went down during the check. `npx eslint . --max-warnings 0` and `npx vite build` pass.
+
+## DD-37 The search card follows the search stream, like ChatGPT's web search
+
+The Scouts and the Fact Checker report in the thread as the search runs, from `POST /search/stream` (D-30): per need the search terms, the passages and sites read, and the closest units after reranking; then one tick or cross per explanation check. The line after the last step shimmers with what runs next, a clock counts up, and the thread follows the feed. When the search ends the card folds into one line (terms, sites, explanations confirmed) that opens again; a search that ends in an error says so instead. Lists show their first few items as chips and the rest as a count. Supersedes the "left for later" note in DD-32 and the rejection of shimmering text in DD-24, which the user asked for.

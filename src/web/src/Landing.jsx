@@ -74,8 +74,8 @@ function PromptBox({ onStart, ready, run, domain }) {
                 className="rounded-full px-3 py-1 font-medium text-ink/60 transition-colors hover:text-ink aria-checked:bg-card aria-checked:text-ink aria-checked:shadow-soft">{label}</button>
             ))}
           </div>
-          <span className={`ml-auto text-xs tabular-nums ${over ? 'font-medium text-red-600 dark:text-red-400' : 'hidden text-ink/50 sm:block'}`}>{text.length} / {max}</span>
-          <button className="grid size-9 place-items-center rounded-full bg-brand-600 text-white shadow-pill transition hover:bg-brand-700 active:scale-95 disabled:opacity-40 disabled:shadow-none"
+          <span className={`text-xs tabular-nums sm:ml-auto ${over ? 'font-medium text-red-600 dark:text-red-400' : 'hidden text-ink/50 sm:block'}`}>{text.length} / {max}</span>
+          <button className="ml-auto grid size-9 place-items-center rounded-full bg-brand-600 text-white shadow-pill transition hover:bg-brand-700 active:scale-95 disabled:bg-ink/15 disabled:text-ink/50 disabled:shadow-none sm:ml-0"
             disabled={!ready || reading || over || text.trim().length < min} aria-label={mode === 'model' ? 'Draft needs' : 'Search'}>
             <Icon><path d="M12 19V5M5.5 11.5 12 5l6.5 6.5" /></Icon>
           </button>

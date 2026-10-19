@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { api } from './api.js'
+import { api, stream } from './api.js'
 import { From } from './agents.jsx'
 import Landing from './Landing.jsx'
 import NeedCard from './NeedCard.jsx'
-import Progress from './Progress.jsx'
+import Progress, { Activity } from './Progress.jsx'
 import Results from './Results.jsx'
 import TopBar from './TopBar.jsx'
 
@@ -24,11 +24,13 @@ export default function App() {
   const [draft, setDraft] = useState(null)
   const [card, setCard] = useState(null)
   const [result, setResult] = useState(null)
+  const [feed, setFeed] = useState(null)         // the steps of the last search stream, in order
+  const [started, setStarted] = useState(0)      // when that search began, for the clock
   const [task, setTask] = useState(null)         // 'draft' | 'search' | 'rerank' | 'pdf' while a call runs
   const [error, setError] = useState(null)
   const end = useRef(null)
   useEffect(() => { api('/api/health').then(setHealth, setError) }, [])
-  useEffect(() => { if (task) end.current?.scrollIntoView({ block: 'end' }) }, [task])
+  useEffect(() => { if (task) end.current?.scrollIntoView({ block: 'end' }) }, [task, feed?.length])   // follow the live feed, as chat apps do
   useEffect(() => { if (result && !result.message) document.getElementById('leads').scrollIntoView() }, [result])   // a new search, not a re-rank
 
   // Runs one API call at a time; any error is shown as-is.
@@ -38,11 +40,19 @@ export default function App() {
     try { await fn() } catch (e) { setError(e) } finally { setTask(null) }
   }
   const domain = health && Object.keys(health.domains)[0]
-  const search = (c) => run('search', async () => setResult(await api(`/api/${domain}/search`, { card: c })))
+  const search = (c) => {
+    setFeed([])
+    setStarted(Date.now())
+    run('search', async () => {
+      setResult(await stream(`/api/${domain}/search/stream`, { card: c }, (e) => setFeed((f) => [...f, e])))
+      setFeed((f) => [...f, { step: 'done' }])   // a feed without it ended in an error
+    })
+  }
   const start = (text, keyword) => {
     setEnquiry({ text, keyword })
     setDraft(null)
     setResult(null)
+    setFeed(null)
     window.scrollTo(0, 0)
     if (keyword) {
       const c = { needs: [{ id: 'n1', text }] }
@@ -57,7 +67,7 @@ export default function App() {
       })
     }
   }
-  const reset = () => { setEnquiry(null); setDraft(null); setCard(null); setResult(null); setError(null) }
+  const reset = () => { setEnquiry(null); setDraft(null); setCard(null); setResult(null); setFeed(null); setError(null) }
 
   const busy = task !== null
   const title = card?.product ?? card?.needs[0].text
@@ -72,17 +82,14 @@ export default function App() {
             </TopBar>
             <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 lg:grid-cols-[minmax(0,1fr)_19rem] lg:py-8" aria-busy={busy}>
               <aside className="min-w-0 lg:sticky lg:top-20 lg:order-2 lg:self-start" aria-label="Agents">
-                <Progress keyword={enquiry.keyword} draft={draft} card={card} result={result} task={task} />
+                <Progress keyword={enquiry.keyword} draft={draft} card={card} feed={feed} result={result} task={task} />
               </aside>
               <main className="min-w-0 space-y-8">
                 <Enquiry text={enquiry.text} />
                 {draft && <NeedCard draft={draft} card={card} setCard={setCard} onSearch={search} busy={busy} searched={result !== null} />}
+                {feed && <Activity needs={(task === 'search' || !result ? card : result.card).needs} feed={feed} task={task} started={started} />}
                 {result && <Results result={result} setResult={setResult} run={run} busy={busy} />}
-                {busy && (
-                  <From ids={task === 'draft' ? ['analyst'] : ['scout', 'checker']}>
-                    <span className="text-sm text-ink/60">{task === 'draft' ? 'is reading the business model…' : 'are searching and checking sources…'}</span>
-                  </From>
-                )}
+                {task === 'draft' && <From ids={['analyst']}><span className="shimmer text-sm">is reading the business model…</span></From>}
                 <div ref={end} />
               </main>
             </div>

@@ -105,3 +105,14 @@
     mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7.5v5.5M12 16.5v.01'/%3E%3C/svg%3E") center / contain no-repeat;
   }
 }
+
+/* ChatGPT-style shimmer on the line an agent is working on (DD-35); static text under reduced motion. */
+@keyframes shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+@layer components {
+  .shimmer {
+    background: linear-gradient(90deg, var(--color-ink) 40%, color-mix(in srgb, var(--color-ink) 30%, transparent) 50%, var(--color-ink) 60%) 0 0 / 200% 100%;
+    background-clip: text;
+    color: transparent;
+    animation: shimmer 2.2s linear infinite;
+  }
+}
