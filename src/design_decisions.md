@@ -201,3 +201,9 @@ Verified in Chrome at 1280 px and 390 px (iframe), light and dark: landing, need
 ## DD-37 The search card follows the search stream, like ChatGPT's web search
 
 The Scouts and the Fact Checker report in the thread as the search runs, from `POST /search/stream` (D-30): per need the search terms, the passages and sites read, and the closest units after reranking; then one tick or cross per explanation check. The line after the last step shimmers with what runs next, a clock counts up, and the thread follows the feed. When the search ends the card folds into one line (terms, sites, explanations confirmed) that opens again; a search that ends in an error says so instead. Lists show their first few items as chips and the rest as a count. Supersedes the "left for later" note in DD-32 and the rejection of shimmering text in DD-24, which the user asked for.
+
+## DD-38 Live check of quoted pages on each quote and in the search card
+
+Each quote in a lead card carries the result of the live check (D-32) next to its source chip: "Checked live 11:17" with a tick when the page still has the quote, an amber warning ("Quote no longer on the page", "Page gone") when it changed or is gone, and a neutral tag when the page did not answer or its host is read with a browser and so is not checked. The time comes from `Lead.checked_at`; hovering shows the full date. Quotes in person cards and results stored before D-32 have no `live` value and show no badge. The search card adds a step per `verify` event: the pages fetched again, each with a tick, a warning or a dash, and the folded line and the Fact Checker note add "n of m quotes found live".
+
+Verified in Chrome against the local API with build 20261019T085810Z: two keyword searches, all quotes found. The warning states were not seen live; they follow the same code path.

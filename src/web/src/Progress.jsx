@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { apiUrl } from './api.js'
 import { AGENTS, AgentBadge, From, Icon } from './agents.jsx'
+import { ALERT, TICK } from './parts.jsx'
 
 // Cowork's progress panel. Every state is read from the API calls themselves: running while the call runs, done with counts from its answer.
 const STATE = {
@@ -31,6 +32,8 @@ export default function Progress({ keyword, draft, card, feed, result, task }) {
   const leads = finished ? result.groups.flatMap((g) => g.leads) : []
   const needs = (finished ? result.card : card)?.needs ?? []
   const hosts = [...new Set(leads.map((l) => l.host))]
+  const quotes = leads.flatMap((l) => l.reasons).filter((r) => r.live)
+  const pages = feed.filter((e) => e.step === 'verify').length
   const step = searching ? 'run' : finished ? 'done' : 'wait'
   return (
     <div className="space-y-5 rounded-2xl border border-line/10 bg-card p-4 shadow-soft" role="status" aria-live="polite">
@@ -56,8 +59,8 @@ export default function Progress({ keyword, draft, card, feed, result, task }) {
             </ul>
           </Row>
           <Row id="checker" state={step}
-            note={finished ? `${leads.filter((l) => l.explanation).length} of ${leads.length} explanations confirmed`
-              : task === 'search' && feed.some((e) => e.step === 'select') ? `${feed.filter((e) => e.step === 'explain').length} checked` : null} />
+            note={finished ? `${leads.filter((l) => l.explanation).length} of ${leads.length} explanations confirmed${quotes.length ? `, ${quotes.filter((r) => r.live === 'found').length} of ${quotes.length} quotes found live` : ''}`
+              : task === 'search' && feed.some((e) => e.step === 'select') ? `${feed.filter((e) => e.step === 'explain').length} checked${pages ? `, ${pages} pages fetched live` : ''}` : null} />
           <Row id="writer" state={finished ? 'done' : 'wait'}>
             {finished && <a className="link mt-1 inline-block text-xs" href={apiUrl(`/api/requests/${result.request_id}/report.pdf`)}>Download report (PDF)</a>}
           </Row>
@@ -102,7 +105,23 @@ function next(feed, needs) {
   if (last.step === 'expand') return `Searching every indexed page for need ${at + 1}`
   if (last.step === 'retrieve') return `Reranking the closest passages for need ${at + 1}`
   if (last.step === 'rerank') return at + 1 < needs.length ? `Turning need ${at + 2} into search terms` : 'Choosing leads that cover every need'
-  return 'Checking each explanation against its source'
+  return 'Checking each explanation against its source and fetching the quoted pages live'
+}
+
+// One line per quoted page fetched again (D-32): a tick when every quote is still there, a warning when one changed or the page is gone.
+function Page({ e }) {
+  const url = new URL(e.url)
+  const bad = e.status.includes('changed') || e.status.includes('gone')
+  const note = e.status.includes('gone') ? 'page gone' : e.status.includes('changed') ? `${e.found} of ${e.quotes} quotes still there`
+    : e.status.includes('unreachable') ? 'did not answer' : e.status.includes('not_checked') ? 'not checked, read with a browser' : null
+  return (
+    <li className="flex items-center gap-2 text-ink/80">
+      {bad || e.found === e.quotes ? <Icon className={`size-3.5 ${bad ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`}>{bad ? ALERT : TICK}</Icon>
+        : <span className="grid size-3.5 place-items-center text-ink/45" aria-hidden="true">–</span>}
+      <span className="min-w-0 truncate" title={e.url}>{url.host.replace(/^www\./, '')}{url.pathname.replace(/\/$/, '')}</span>
+      {note ? <span className="shrink-0 text-xs text-ink/65">{note}</span> : <span className="sr-only">quote found</span>}
+    </li>
+  )
 }
 
 // ChatGPT's "searching the web" card, driven by the search stream (D-30): per need the terms, the sites read and the closest units,
@@ -119,6 +138,8 @@ export function Activity({ needs, feed, task, started }) {
   const of = (step, need) => feed.find((e) => e.step === step && e.need === need)
   const leads = feed.find((e) => e.step === 'select')?.leads ?? []
   const checks = feed.filter((e) => e.step === 'explain')
+  const verified = feed.filter((e) => e.step === 'verify')
+  const quotes = verified.reduce((n, e) => n + e.quotes, 0)
   const terms = feed.filter((e) => e.step === 'expand').flatMap((e) => e.terms)
   const sites = new Set(feed.filter((e) => e.step === 'retrieve').flatMap((e) => e.sites))
   const elapsed = clock(Math.max(0, now - started))
@@ -130,6 +151,7 @@ export function Activity({ needs, feed, task, started }) {
           <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="flex w-full items-center gap-2 text-left text-sm font-medium">
             <span className="flex-1">{feed.at(-1)?.step === 'done'
               ? `Searched ${terms.length} terms on ${sites.size} sites · ${checks.filter((c) => c.supported).length} of ${leads.length} explanations confirmed`
+                + (quotes ? ` · ${verified.reduce((n, e) => n + e.found, 0)} of ${quotes} quotes found live` : '')
               : `Stopped with an error after ${feed.length} steps`}</span>
             <Icon className={`size-4 text-ink/65 transition-transform ${open ? 'rotate-180' : ''}`}><path d="m6 9 6 6 6-6" /></Icon>
           </button>
@@ -166,6 +188,14 @@ export function Activity({ needs, feed, task, started }) {
                       )
                     })}
                   </ul>
+                </Step>
+              </li>
+            )}
+            {verified.length > 0 && (
+              <li>
+                <Step state={searching ? 'run' : 'done'}>
+                  <p>Fetched {verified.length} quoted {verified.length === 1 ? 'page' : 'pages'} again to check the quotes are still there</p>
+                  <ul className="space-y-1">{verified.map((e) => <Page key={e.url} e={e} />)}</ul>
                 </Step>
               </li>
             )}

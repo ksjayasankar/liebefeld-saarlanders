@@ -54,7 +54,7 @@ function Lead({ lead, onFeedback, busy, delay }) {
         <div className="min-w-0 space-y-6">
           <Part title="Why it matches">
             {lead.explanation && <p className="mb-3 text-base">{lead.explanation}</p>}
-            <ul className="space-y-4">{lead.reasons.map((r, i) => <li key={i}><Quote reason={r} delay={delay + i * 80} /></li>)}</ul>
+            <ul className="space-y-4">{lead.reasons.map((r, i) => <li key={i}><Quote reason={r} checkedAt={lead.checked_at} delay={delay + i * 80} /></li>)}</ul>
           </Part>
           {lead.expertise.length > 0 && (
             <Part title="Fields of expertise">
