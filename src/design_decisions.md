@@ -161,3 +161,19 @@ The same temporary mock outside the repo (now with a 1.5 s delay on search so th
 - no console warnings.
 
 The built CSS contains the reduced-motion rule and the `.dark` token block. The OS reduced-motion setting itself could not be toggled from the browser tools.
+
+## DD-30 Agent workspace: the template's landing page returns, the work screen becomes Cowork-like
+
+Agency staff know Claude Cowork, so the front end borrows its shape. Two screens, as in the template: a landing page (navbar, one headline, the prompt box, a preview card, a short "how it works" section, footer) and, after sending, a work screen with the thread on the left and a progress panel on the right. Supersedes DD-09 (no landing page) and DD-25 (one status pill). Header text cut to the product name; the agency name moved to the footer.
+
+## DD-31 Four named agents, each a real step
+
+Need Analyst (`needcard.py`, Apertus 8B), Scouts (`rank.py`, one row per need), Fact Checker (`explain.py` + support check, Apertus 70B) and Report Writer (`report.py`). Names and icons only; the pipeline is unchanged and stays deterministic. Every state in the panel is read from the API calls: running while the call runs, done with counts from its answer (needs drafted, leads per need, explanations confirmed out of leads, report link). No sub-step is shown that the API does not report; live sub-steps need the search endpoint to stream events, which is left for later. The landing page does not claim the Scouts run in parallel because `rank.rank` loops over needs one at a time.
+
+## DD-32 The prompt box carries both inputs
+
+One box with a Business model / Keyword switch replaces the two forms. Three made-up example business models fill the box in one click. The preview card draws leads as placeholder lines, so the page shows no invented unit or source.
+
+## DD-33 Feedback as thumbs plus one menu
+
+"More like this" and "Not relevant" are icon buttons, as in the template's answer card; the other five reasons sit in one select. Seven chips per lead were the noisiest part of the results.

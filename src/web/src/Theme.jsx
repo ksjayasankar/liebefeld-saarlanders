@@ -24,7 +24,7 @@ export default function Theme() {
   }, [theme])
 
   return (
-    <div role="group" aria-label="Colour theme" className="ml-auto flex shrink-0 rounded-full border border-line/15 bg-card p-0.5">
+    <div role="group" aria-label="Colour theme" className="flex shrink-0 rounded-full border border-line/15 bg-card p-0.5">
       {Object.entries(ICONS).map(([t, icon]) => (
         <button key={t} type="button" aria-pressed={theme === t} aria-label={`${t[0].toUpperCase()}${t.slice(1)} theme`} onClick={() => setTheme(t)}
           className="grid size-7 place-items-center rounded-full text-ink/60 transition-colors hover:text-ink aria-pressed:bg-surface aria-pressed:text-ink">

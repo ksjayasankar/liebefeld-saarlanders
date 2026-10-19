@@ -1,9 +1,15 @@
-import { api, apiUrl } from './api.js'
-import { ACTIONS, STAGES } from './labels.js'
+import { api } from './api.js'
+import { From, Icon } from './agents.jsx'
+import { ACTIONS } from './labels.js'
 import { Ext, Quote, Source } from './parts.jsx'
 
 const EMAIL = /^[^\s@<>"]+@[^\s@<>"]+\.[a-z]{2,}$/i
 const PHONE = /^\+?[\d ()./-]{6,20}$/
+// Thumbs up and down, as in the template's answer card; the other reasons sit in one menu.
+const QUICK = [
+  ['more_like_this', <path key="u" d="M7 11v9H4v-9zM7 11l4-8a2.5 2.5 0 0 1 2.5 2.5V9h5.2a2 2 0 0 1 2 2.3l-1.2 7A2 2 0 0 1 17.5 20H7" />],
+  ['not_relevant', <path key="d" d="M17 13V4h3v9zM17 13l-4 8a2.5 2.5 0 0 1-2.5-2.5V15H5.3a2 2 0 0 1-2-2.3l1.2-7A2 2 0 0 1 6.5 4H17" />],
+]
 const KINDS = { project: 'Project', facility: 'Infrastructure or service' }
 const day = (d) => new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
 
@@ -29,7 +35,7 @@ function Person({ p }) {
 
 const Part = ({ title, children }) => <section><h4 className="kicker mb-2.5">{title}</h4>{children}</section>
 
-function Lead({ lead, needText, onFeedback, busy, delay }) {
+function Lead({ lead, onFeedback, busy, delay }) {
   return (
     <article className="card animate-fade-up space-y-6" style={{ animationDelay: `${delay}ms` }} aria-labelledby={`lead-${lead.unit_id}`}>
       <header className="space-y-2.5">
@@ -40,7 +46,6 @@ function Lead({ lead, needText, onFeedback, busy, delay }) {
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-ink/65 tabular-nums">
           <Source href={lead.url} />
           {lead.page_date && <span>Page dated {day(lead.page_date)}</span>}
-          <span>{lead.page_count} pages indexed</span>
           {lead.stale && <span className="warn">May be outdated</span>}
         </div>
       </header>
@@ -49,7 +54,6 @@ function Lead({ lead, needText, onFeedback, busy, delay }) {
         <div className="min-w-0 space-y-6">
           <Part title="Why it matches">
             {lead.explanation && <p className="mb-3 text-base">{lead.explanation}</p>}
-            <p className="mb-3 text-sm text-ink/65">Answers: {lead.need_ids.map(needText).join('; ')}</p>
             <ul className="space-y-4">{lead.reasons.map((r, i) => <li key={i}><Quote reason={r} delay={delay + i * 80} /></li>)}</ul>
           </Part>
           {lead.expertise.length > 0 && (
@@ -76,47 +80,42 @@ function Lead({ lead, needText, onFeedback, busy, delay }) {
       </div>
 
       <div className="flex flex-wrap items-center gap-1.5 border-t border-line/10 pt-4" role="group" aria-label={`Feedback on ${lead.name}`}>
-        <span className="kicker mr-1">Feedback</span>
-        {Object.entries(ACTIONS).map(([action, text]) => (
-          <button key={action} type="button" className="chip" disabled={busy} onClick={() => onFeedback(action)}>{text}</button>
+        {QUICK.map(([action, icon]) => (
+          <button key={action} type="button" className="grid size-9 place-items-center rounded-full text-ink/60 transition-colors hover:bg-surface hover:text-ink disabled:opacity-40"
+            disabled={busy} onClick={() => onFeedback(action)} aria-label={ACTIONS[action]} title={ACTIONS[action]}><Icon>{icon}</Icon></button>
         ))}
+        <label className="ml-1"><span className="sr-only">Other feedback on {lead.name}</span>
+          <select className="h-9 rounded-full border border-line/15 bg-card px-3 text-sm text-ink/75" value="" disabled={busy} onChange={(e) => onFeedback(e.target.value)}>
+            <option value="" disabled>Other feedback…</option>
+            {Object.entries(ACTIONS).filter(([a]) => !QUICK.some(([q]) => q === a)).map(([a, text]) => <option key={a} value={a}>{text}</option>)}
+          </select>
+        </label>
       </div>
     </article>
   )
 }
 
-export default function Results({ result, setResult, run, busy, onBack }) {
-  const id = result.request_id
-  const { card } = result
-  const needText = (nid) => card.needs.find((n) => n.id === nid).text
-  const feedback = (lead, action) => run('Re-ranking the leads with your feedback…', async () =>
-    setResult(await api(`/api/requests/${id}/feedback`, { unit_id: lead.unit_id, need_id: lead.need_ids[0], action })))
+export default function Results({ result, setResult, run, busy }) {
+  const feedback = (lead, action) => run('rerank', async () =>
+    setResult(await api(`/api/requests/${result.request_id}/feedback`, { unit_id: lead.unit_id, need_id: lead.need_ids[0], action })))
 
   return (
-    <div className="space-y-8">
-      <section className="animate-fade-up space-y-4" aria-labelledby="request-title">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <button type="button" className="btn-ghost" onClick={onBack}><span aria-hidden="true">←&nbsp;</span>New search</button>
-          <a className="btn" href={apiUrl(`/api/requests/${id}/report.pdf`)}>Download report (PDF)</a>
-        </div>
-        <div className="card space-y-3">
-          <h2 id="request-title" className="kicker">Results for</h2>
-          {(card.sector || card.product || card.stage) && (
-            <p className="text-lg font-semibold tracking-tight">{[card.sector, card.product, card.stage && STAGES[card.stage]].filter(Boolean).join(' · ')}</p>
-          )}
+    <section id="leads" className="animate-fade-up scroll-mt-20" aria-label="Leads">
+      <From ids={['scout', 'checker']} />
+      <div className="space-y-8">
+        <div className="space-y-2">
           <p className="rounded-xl bg-surface px-3.5 py-2.5 text-sm">{result.coverage_line}</p>
           {result.message && <p role="status" className="rounded-xl bg-brand-50 px-3.5 py-2.5 text-sm text-brand-800 dark:bg-brand-500/15 dark:text-brand-100">{result.message}</p>}
         </div>
-      </section>
-
-      {result.groups.map((g, gi) => (
-        <section key={g.category} className="space-y-4" aria-labelledby={`group-${g.category}`}>
-          <h2 id={`group-${g.category}`} className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-            {g.label}<span className="rounded-full bg-surface px-2 text-sm font-medium text-ink/65 tabular-nums ring-1 ring-line/10">{g.leads.length}</span>
-          </h2>
-          {g.leads.map((l, i) => <Lead key={l.unit_id} lead={l} needText={needText} busy={busy} delay={(gi + i) * 80} onFeedback={(a) => feedback(l, a)} />)}
-        </section>
-      ))}
-    </div>
+        {result.groups.map((g, gi) => (
+          <section key={g.category} className="space-y-4" aria-labelledby={`group-${g.category}`}>
+            <h2 id={`group-${g.category}`} className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+              {g.label}<span className="rounded-full bg-surface px-2 text-sm font-medium text-ink/65 tabular-nums ring-1 ring-line/10">{g.leads.length}</span>
+            </h2>
+            {g.leads.map((l, i) => <Lead key={l.unit_id} lead={l} busy={busy} delay={(gi + i) * 80} onFeedback={(a) => feedback(l, a)} />)}
+          </section>
+        ))}
+      </div>
+    </section>
   )
 }
