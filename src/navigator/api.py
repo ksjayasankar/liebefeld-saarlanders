@@ -9,7 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import Body, FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
@@ -235,13 +235,14 @@ def introduction(request_id: uuid.UUID, body: IntroductionRequest):
         return intro
 
 
-@app.get("/api/requests/{request_id}/report.pdf")
-def report_pdf(request_id: uuid.UUID):
+@app.get("/api/requests/{request_id}/report/{audience}.pdf")
+def report_pdf(request_id: uuid.UUID, audience: Literal["internal", "external"]):
+    """internal: the agency's review of the findings; external: the report the agency sends the company."""
     from . import report
     with STATE["pool"].connection() as conn:
         stored(conn, request_id)
-        return Response(report.render(conn, request_id), media_type="application/pdf",
-                        headers={"Content-Disposition": f'attachment; filename="navigator-report-{request_id}.pdf"'})
+        return Response(report.render(conn, request_id, audience), media_type="application/pdf",
+                        headers={"Content-Disposition": f'attachment; filename="bern-partners-{audience}-{str(request_id)[:8]}.pdf"'})
 
 
 @app.get("/api/health", response_model=Health)

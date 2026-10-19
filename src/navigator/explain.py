@@ -7,10 +7,12 @@ from . import apertus, support
 from .config import Strict, env
 from .models import Lead
 
-SYSTEM = ("You explain to a business development officer, in one sentence, what a research unit does that answers "
-          "a company's needs. State only what the numbered sentences say.")
-INSTRUCTION = """Needs: {needs}
-Return: {{"sentence": "one sentence of at most 35 words about the unit"}}"""
+# Issue 68: given the needs as the subject, the 8B model restated them as the unit's work ("designs clinical validation
+# studies for the glucose sensor") and the checker rightly dropped the sentence. The needs are now context only.
+SYSTEM = ("You tell a business development officer, in one sentence, what a research unit does, using only what the numbered "
+          "sentences say about it. Do not describe the company, its product or what the unit could do for it.")
+INSTRUCTION = """The company is looking for: {needs}
+Return: {{"sentence": "one sentence of at most 35 words about what the unit does, as the numbered sentences state it"}}"""
 
 
 class Explanation(Strict):

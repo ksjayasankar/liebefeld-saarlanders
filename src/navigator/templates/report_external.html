@@ -1,0 +1,57 @@
+{% extends "report_base.html" %}
+{% block title %}Your partners in Bern{% endblock %}
+{% block audience %}external{% endblock %}
+{% block kicker %}Research and expertise partners in Bern{% endblock %}
+{% block sub %}Prepared for: {{ res.card.product or "your company" }}<br>
+<span class="meta">{{ created.strftime("%d %B %Y") }} · Ref. {{ res.request_id | string | truncate(8, True, "") | upper }}</span>{% endblock %}
+
+{% block body %}
+<section>
+  <h2>Your needs</h2>
+  <ol class="needs">
+    {% for n in res.card.needs %}
+    <li>{{ n.text }}{% if n.id in res.uncovered %} <span class="meta">— no partner found in the public sources</span>{% endif %}</li>
+    {% endfor %}
+  </ol>
+  <p class="meta">Every statement below comes from a public web page; the small numbers refer to the sources at the end.</p>
+</section>
+
+<section>
+  <h2>Partners in Bern</h2>
+  {% for g in groups %}
+  <h3 class="group">{{ g.label }}</h3>
+  {% for c in g.cards %}
+  <article class="card">
+    <h3>{{ c.lead.name }}</h3>
+    {% if c.lead.parent %}<p class="meta">{{ c.lead.parent }}</p>{% endif %}
+    {% set about = c.explanation or c.summary %}
+    <p>{{ about.text }}<sup>{{ about.n }}</sup></p>
+    {% for q in c.quotes %}
+    <blockquote>“{{ q.text }}”<sup>{{ q.n }}</sup>{% if res.card.needs | length > 1 %}<br><span class="for">For your need: {{ q.need }}</span>{% endif %}</blockquote>
+    {% endfor %}
+    {% for p in c.people %}<p class="person"><b>Contact person:</b> {{ p.titles }} {{ p.name }}{% if p.function %}, {{ p.function }}{% endif %}</p>{% endfor %}
+    {% if c.lead.items %}<p class="meta">Related projects and infrastructure: {{ c.lead.items | map(attribute="name") | join(" · ") }}</p>{% endif %}
+  </article>
+  {% endfor %}
+  {% endfor %}
+</section>
+
+{% if sections %}
+<section>
+  <h2>Support in Bern</h2>
+  {% for s in sections %}
+  <h3 class="group">{{ s.title }}</h3>
+  <ul class="facts">{% for x in s.sentences %}<li>{{ x.text }}<sup>{{ x.n }}</sup></li>{% endfor %}</ul>
+  {% endfor %}
+</section>
+{% endif %}
+
+<section class="contact">
+  <h2>Contact</h2>
+  <div class="box">
+    <p><b>Standortförderung Kanton Bern</b><br>Bern Economic Development Agency</p>
+    <p>Introductions to the people named in this report go through the agency. Please quote reference
+    {{ res.request_id | string | truncate(8, True, "") | upper }}.</p>
+  </div>
+</section>
+{% endblock %}
