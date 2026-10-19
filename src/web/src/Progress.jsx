@@ -62,7 +62,12 @@ export default function Progress({ keyword, draft, card, feed, result, task }) {
             note={finished ? `${leads.filter((l) => l.explanation).length} of ${leads.length} explanations confirmed${quotes.length ? `, ${quotes.filter((r) => r.live === 'found').length} of ${quotes.length} quotes found live` : ''}`
               : task === 'search' && feed.some((e) => e.step === 'select') ? `${feed.filter((e) => e.step === 'explain').length} checked${pages ? `, ${pages} pages fetched live` : ''}` : null} />
           <Row id="writer" state={finished ? 'done' : 'wait'}>
-            {finished && <a className="link mt-1 inline-block text-xs" href={apiUrl(`/api/requests/${result.request_id}/report.pdf`)}>Download report (PDF)</a>}
+            {finished && (
+              <p className="mt-1 flex flex-wrap gap-x-3 text-xs">
+                <a className="link" href={apiUrl(`/api/requests/${result.request_id}/report/internal.pdf`)}>Internal review (PDF)</a>
+                <a className="link" href={apiUrl(`/api/requests/${result.request_id}/report/external.pdf`)}>Report for the company (PDF)</a>
+              </p>
+            )}
           </Row>
         </ol>
       </section>

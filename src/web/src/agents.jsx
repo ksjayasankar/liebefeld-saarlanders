@@ -6,7 +6,7 @@ export const AGENTS = {
     icon: <><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></> },
   checker: { name: 'Fact Checker', model: 'Apertus 70B', line: 'Keeps an explanation only when its quoted source backs it.',
     icon: <><path d="M12 3 5 6v5c0 4.5 3 8.5 7 10 4-1.5 7-5.5 7-10V6z" /><path d="m9 12 2 2 4-4" /></> },
-  writer: { name: 'Report Writer', model: 'PDF', line: 'Puts the leads, people and sources into one report.',
+  writer: { name: 'Report Writer', model: 'PDF', line: 'Writes an internal review and the report for the company.',
     icon: <><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5M12 11v6M9.5 14.5 12 17l2.5-2.5" /></> },
 }
 
