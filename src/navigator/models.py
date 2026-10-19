@@ -40,7 +40,12 @@ class NeedCard(Strict):
 
 
 class DraftRequest(Strict):
-    description: str = Field(min_length=20, max_length=5000)
+    description: str = Field(min_length=20, max_length=20000)
+
+
+class PdfText(Strict):
+    text: str                             # shown to staff for review; only what they then submit reaches Apertus
+    pages: int
 
 
 class Draft(Strict):

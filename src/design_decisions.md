@@ -161,3 +161,7 @@ The same temporary mock outside the repo (now with a 1.5 s delay on search so th
 - no console warnings.
 
 The built CSS contains the reduced-motion rule and the `.dark` token block. The OS reduced-motion setting itself could not be toggled from the browser tools.
+
+## DD-30 PDF upload in the prompt box
+
+The upload sits in the prompt box's footer as a ghost button ("Upload PDF") next to the character count, so pasting stays the main path and the box stays one surface. The file input is visually hidden inside a label, so it keeps keyboard focus and the focus ring. While the PDF is read, the usual status pill names the file. After reading, a brand-tinted note under the text names the file and page count and says that everything in the box, including text hidden in the PDF, is what Apertus reads. The count turns red above 20,000 characters and "Draft need card" is disabled until the text is shortened.

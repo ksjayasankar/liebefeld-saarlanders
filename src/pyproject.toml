@@ -20,6 +20,8 @@ dependencies = [
   "weasyprint>=70.0",
   "matplotlib>=3.10",
   "pyarrow>=21.0",
+  "docling>=2.140",
+  "easyocr>=1.7.2",
 ]
 
 [project.optional-dependencies]

@@ -1,6 +1,6 @@
 # Research & Expertise Navigator
 
-A workspace for the Bern Economic Development Agency. A company considering Bern sends its business model; agency staff paste it, confirm the need card Apertus drafts, and get potential collaborators at the University of Bern and the Diabetes Center Berne: research groups, people and contact persons with their functions, expertise, projects and infrastructure. Every claim quotes and links the public page it comes from. Built for the Hack Apertus challenge.
+A workspace for the Bern Economic Development Agency. A company considering Bern sends its business model; agency staff paste it or upload it as a PDF (read locally with Docling, OCR for scanned pages), confirm the need card Apertus drafts, and get potential collaborators at the University of Bern and the Diabetes Center Berne: research groups, people and contact persons with their functions, expertise, projects and infrastructure. Every claim quotes and links the public page it comes from. Built for the Hack Apertus challenge.
 
 The tool shows contact data collected from public pages and has no login yet: run it only where agency staff alone can reach it.
 

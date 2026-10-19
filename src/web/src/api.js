@@ -3,9 +3,12 @@ if (typeof BASE !== 'string') throw new Error('VITE_API_BASE must be set (web/.e
 
 export const apiUrl = (path) => `${BASE}${path}`
 
-// GET when body is undefined, POST JSON otherwise. Non-2xx throws an Error carrying detail and request_id.
+// GET when body is undefined, the file itself when it is a File (PDF upload), JSON otherwise.
+// Non-2xx throws an Error carrying detail and request_id.
 export async function api(path, body) {
-  const init = body === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+  const init = body === undefined ? {}
+    : body instanceof File ? { method: 'POST', headers: { 'Content-Type': 'application/pdf' }, body }
+    : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
   const res = await fetch(apiUrl(path), init)
   const data = await res.json()
   if (!res.ok) {

@@ -4,10 +4,12 @@ import { CATEGORIES, STAGES } from './labels.js'
 
 const IDS = ['n1', 'n2', 'n3', 'n4', 'n5']
 const SEARCHING = 'Searching research units in Bern and checking each explanation against its sources…'
+const MAX = 20000   // DraftRequest.description
 
 export default function Search({ domain, run, busy, onResult }) {
   const [query, setQuery] = useState('')
   const [description, setDescription] = useState('')
+  const [file, setFile] = useState(null)   // { name, pages } of the PDF the text was read from
   const [draft, setDraft] = useState(null)
   const [card, setCard] = useState(null)
   const cardRef = useRef(null)
@@ -18,6 +20,11 @@ export default function Search({ domain, run, busy, onResult }) {
     const d = await api(`/api/${domain}/need-card/draft`, { description })
     setDraft(d)
     setCard(d.card)
+  })
+  const readPdf = (f) => run(`Reading ${f.name} (layout, tables and scanned pages)…`, async () => {
+    const d = await api(`/api/${domain}/need-card/pdf`, f)
+    setDescription(d.text)
+    setFile({ name: f.name, pages: d.pages })
   })
   const set = (field, value) => setCard({ ...card, [field]: value })
   const setNeed = (id, field, value) => set('needs', card.needs.map((n) => (n.id === id ? { ...n, [field]: value } : n)))
@@ -30,17 +37,32 @@ export default function Search({ domain, run, busy, onResult }) {
         <div className="max-w-2xl">
           <p className="kicker">New enquiry</p>
           <h2 id="model-title" className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">Find collaborators in Bern for a company</h2>
-          <p className="hint mt-2 text-[15px]">Paste the business model the company sent. Apertus drafts a need card from it; you check and edit the card before anything is searched.</p>
+          <p className="hint mt-2 text-[15px]">Paste the business model the company sent, or upload it as a PDF. Apertus drafts a need card from it; you check and edit the card before anything is searched.</p>
         </div>
         <form onSubmit={submit(draftCard)}>
           <label htmlFor="model" className="sr-only">Company business model (plain text)</label>
           <div className="rounded-3xl border border-line/10 bg-card p-2 shadow-panel transition-shadow focus-within:ring-2 focus-within:ring-brand-500/60">
             <textarea id="model" rows={7} className="block w-full resize-y bg-transparent px-3 py-2 leading-relaxed outline-none placeholder:text-ink/45"
-              value={description} onChange={(e) => setDescription(e.target.value)} required minLength={20} maxLength={5000}
-              placeholder="Paste the company's business model here (plain text)…" />
-            <div className="flex items-center justify-between gap-3 border-t border-line/10 px-3 pt-2">
-              <span className="text-xs text-ink/55 tabular-nums">{description.length} / 5000</span>
-              <button className="btn" disabled={busy}>Draft need card</button>
+              value={description} onChange={(e) => setDescription(e.target.value)} required minLength={20}
+              placeholder="Paste the company's business model here, or upload a PDF…" />
+            {file && (
+              <p className="mx-3 mb-2 rounded-xl bg-brand-50 px-3 py-2 text-sm text-brand-900 dark:bg-brand-500/10 dark:text-brand-100">
+                Text read from <span className="font-medium">{file.name}</span> ({file.pages} {file.pages === 1 ? 'page' : 'pages'}). Check and edit it: everything
+                in this box, including any text hidden in the PDF, is what Apertus reads.
+              </p>
+            )}
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line/10 px-3 pt-2">
+              <div className="flex items-center gap-3">
+                <label className={`btn-ghost cursor-pointer px-3 py-1.5 focus-within:ring-2 focus-within:ring-brand-500/60 ${busy ? 'pointer-events-none opacity-50' : ''}`}>
+                  Upload PDF
+                  <input type="file" accept="application/pdf,.pdf" className="sr-only" disabled={busy}
+                    onChange={(e) => { const f = e.target.files[0]; e.target.value = ''; if (f) readPdf(f) }} />
+                </label>
+                <span className={`text-xs tabular-nums ${description.length > MAX ? 'font-medium text-red-600 dark:text-red-400' : 'text-ink/55'}`}>
+                  {description.length} / {MAX}{description.length > MAX && ' – shorten the text to the parts about the company'}
+                </span>
+              </div>
+              <button className="btn" disabled={busy || description.length > MAX}>Draft need card</button>
             </div>
           </div>
         </form>

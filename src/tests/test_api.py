@@ -18,7 +18,7 @@ def test_search_rejects_empty_need():
 
 
 def test_description_limit():
-    r = client.post("/api/medtech/need-card/draft", json={"description": "word " * 1001})
+    r = client.post("/api/medtech/need-card/draft", json={"description": "word " * 4001})
     assert r.status_code == 422
 
 

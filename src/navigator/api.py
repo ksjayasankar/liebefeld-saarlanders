@@ -6,17 +6,19 @@ from collections import defaultdict, deque
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
-from fastapi import FastAPI, HTTPException, Request
+from typing import Annotated
+
+from fastapi import Body, FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from psycopg import sql
 from psycopg.types.json import Jsonb
 
-from . import apertus, db, embed, explain, needcard, rank
+from . import apertus, db, embed, explain, needcard, pdf, rank
 from .config import env, load_domain
-from .models import (Draft, DraftRequest, FeedbackRequest, Health, Introduction, IntroductionRequest, NeedCard, SearchRequest,
-                     SearchResult)
+from .models import (Draft, DraftRequest, FeedbackRequest, Health, Introduction, IntroductionRequest, NeedCard, PdfText,
+                     SearchRequest, SearchResult)
 from .normalise import AI_ADDRESSED, sentences
 
 MESSAGES = {
@@ -44,7 +46,7 @@ async def lifespan(app: FastAPI):
             assert (b["model_id"], b["dim"]) == (embed.MODEL_ID, embed.DIM), f"live_{d} was built with {b['model_id']}"
     listed = {m.id for m in apertus._client().models.list().data}
     assert {env("APERTUS_8B"), env("APERTUS_70B")} <= listed, f"gateway does not list the configured models: {listed}"
-    embed.embedder(), embed.reranker()
+    embed.embedder(), embed.reranker(), pdf.converter()
     STATE.update(domains=domains, pool=pool, hits=defaultdict(deque))
     yield
     pool.close()
@@ -121,6 +123,18 @@ def draft(domain: str, body: DraftRequest, request: Request):
         raise HTTPException(422, "the description has no full sentences about the company")
     with STATE["pool"].connection() as conn:
         return needcard.draft(conn, body.description)
+
+
+@app.post("/api/{domain}/need-card/pdf", response_model=PdfText)
+def pdf_text(domain: str, data: Annotated[bytes, Body(media_type="application/pdf")], request: Request):
+    """D-29: the PDF is read locally and never stored; staff edit the returned text before drafting."""
+    domain_of(domain)
+    limit(request)
+    try:
+        text, pages = pdf.text(data)
+    except ValueError as e:
+        raise HTTPException(422, str(e))
+    return PdfText(text=text, pages=pages)
 
 
 @app.post("/api/{domain}/search", response_model=SearchResult)
