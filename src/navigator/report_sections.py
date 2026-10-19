@@ -22,7 +22,7 @@ def run(conn, domain: Domain, pages: list[dict]) -> list[dict]:
         assert not missing, f"report section {name}: sources not in the build: {missing}"
         numbered = [(s, u) for u in sec.sources for s in sentences(by_url[u]["text"])]
         lines = [s for s, _ in numbered]
-        out = apertus.call(conn, env("APERTUS_70B"), SYSTEM, lines, INSTRUCTION.format(title=sec.title, brief=sec.brief),
+        out = apertus.call(conn, env("LLM_NAME_LARGE"), SYSTEM, lines, INSTRUCTION.format(title=sec.title, brief=sec.brief),
                            apertus.ReportSection, 0.2, 1200)
         for pos, s in enumerate(out.sentences, 1):
             source, url = numbered[s.source - 1]

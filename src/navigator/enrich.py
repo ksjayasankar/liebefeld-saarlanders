@@ -35,7 +35,7 @@ def enrich_unit(conn, unit: dict, unit_pages: list[dict]) -> dict:
     numbered = unit_sentences(unit_pages)
     assert numbered, f"unit {unit['id']} has no sentences"
     lines = [s for s, _ in numbered]
-    a = apertus.call(conn, env("APERTUS_70B"), SYSTEM, lines, INSTRUCTION.format(name=unit["name"], generic=", ".join(sorted(apertus.GENERIC))), apertus.UnitSummary, 0.2, 1200)
+    a = apertus.call(conn, env("LLM_NAME_LARGE"), SYSTEM, lines, INSTRUCTION.format(name=unit["name"], generic=", ".join(sorted(apertus.GENERIC))), apertus.UnitSummary, 0.2, 1200)
     # The writer under-cites (D-22): the checker reads all of the unit's lines and names the ones that support each sentence.
     verdicts = [(s, support.supporting_lines(conn, s, lines)) for s in sentences(a.summary) or [a.summary]]
     accepted = [(s, found) for s, found in verdicts if found]
@@ -57,7 +57,7 @@ def run(extracted: dict) -> dict[str, dict]:
             except AssertionError as e:   # every failing unit is reported, then the run stops
                 return unit["id"], e
 
-    with ThreadPoolExecutor(int(env("APERTUS_PARALLEL"))) as ex:
+    with ThreadPoolExecutor(int(env("LLM_PARALLEL"))) as ex:
         out = dict(ex.map(one, extracted["units"]))
     failed = {u: e for u, e in out.items() if isinstance(e, AssertionError)}
     assert not failed, f"enrich: {len(failed)} of {len(out)} units failed; fix the prompt and rerun (the cache keeps the rest):\n" + \

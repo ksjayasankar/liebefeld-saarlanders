@@ -23,12 +23,12 @@ def explain(conn, lead: Lead) -> str | None:
     """None when the 70B checker finds no supporting reason sentence; the quotes stay the evidence."""
     lines = [r.sentence for r in lead.reasons]
     needs = "; ".join(r.need_text for r in lead.reasons).replace("<", "‹").replace(">", "›")
-    s = apertus.call(conn, env("APERTUS_8B"), SYSTEM, lines, INSTRUCTION.format(needs=needs), Explanation, 0.0, 200).sentence
+    s = apertus.call(conn, env("LLM_NAME"), SYSTEM, lines, INSTRUCTION.format(needs=needs), Explanation, 0.0, 200).sentence
     return s if support.supporting_lines(conn, s, lines) else None
 
 
 def explain_all(conn, leads: list[Lead], progress=lambda event: None):
-    """In parallel; the gateway client limits concurrent calls (APERTUS_PARALLEL). One progress event per lead, in order."""
+    """In parallel; the gateway client limits concurrent calls (LLM_PARALLEL). One progress event per lead, in order."""
     with ThreadPoolExecutor(max(len(leads), 1)) as ex:
         for lead, s in zip(leads, ex.map(lambda l: explain(conn, l), leads)):
             lead.explanation = s

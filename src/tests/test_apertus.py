@@ -34,7 +34,7 @@ def gateway(monkeypatch):
 
     client = OpenAI(base_url="http://fake/v1", api_key="k", max_retries=0, http_client=httpx.Client(transport=httpx.MockTransport(handle)))
     monkeypatch.setattr(apertus, "_client", lambda: client)
-    monkeypatch.setenv("APERTUS_PARALLEL", "2")
+    monkeypatch.setenv("LLM_PARALLEL", "2")
     return state
 
 
@@ -107,4 +107,4 @@ def test_prompts_contain_no_secrets():
     import inspect
     from navigator import enrich
     src = inspect.getsource(enrich) + apertus.GUARD
-    assert "APERTUS_API_KEY" not in src and "http" not in apertus.GUARD
+    assert "LLM_API_KEY" not in src and "http" not in apertus.GUARD

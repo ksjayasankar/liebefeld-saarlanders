@@ -45,7 +45,7 @@ class Ranked:
 
 
 def expand(conn, text: str) -> list[str]:
-    e = apertus.call(conn, env("APERTUS_8B"), EXPAND_SYSTEM, [text], EXPAND_INSTRUCTION, apertus.Expansion, 0.0, 400)
+    e = apertus.call(conn, env("LLM_NAME"), EXPAND_SYSTEM, [text], EXPAND_INSTRUCTION, apertus.Expansion, 0.0, 400)
     return e.en + e.de + e.fr
 
 

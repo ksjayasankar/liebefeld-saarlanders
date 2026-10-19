@@ -12,4 +12,4 @@ Return {{"lines": []}} if the claim is not fully supported."""
 
 def supporting_lines(conn, claim: str, sources: list[str]) -> list[int]:
     """The 1-based numbers of the source lines that support the claim; empty when it is not supported."""
-    return apertus.call(conn, env("APERTUS_70B"), SYSTEM, sources, INSTRUCTION.format(claim=claim, n=len(sources)), apertus.Support, 0.0, 400).lines
+    return apertus.call(conn, env("LLM_NAME_LARGE"), SYSTEM, sources, INSTRUCTION.format(claim=claim, n=len(sources)), apertus.Support, 0.0, 400).lines

@@ -20,7 +20,7 @@ def draft(conn, description: str) -> Draft:
     lines = [s for s in sentences(description) if not AI_ADDRESSED.search(s)]
     ignored = [s for s in sentences(description) if AI_ADDRESSED.search(s)]
     assert lines, "the description has no full sentences about the company"
-    d = apertus.call(conn, env("APERTUS_8B"), SYSTEM, lines, INSTRUCTION, apertus.NeedCardDraft, 0.2, 700)
+    d = apertus.call(conn, env("LLM_NAME"), SYSTEM, lines, INSTRUCTION, apertus.NeedCardDraft, 0.2, 700)
     needs = [Need(id=f"n{i}", text=n.text, category=n.category) for i, n in enumerate(d.needs, 1)]
     return Draft(card=NeedCard(sector=d.sector, product=d.product, stage=d.stage, needs=needs), sentences=lines,
                  sources={f"n{i}": n.sources for i, n in enumerate(d.needs, 1)}, ignored=ignored)

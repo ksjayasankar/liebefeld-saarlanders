@@ -12,3 +12,6 @@ web/dist/
 data - downloaded/
 .DS_Store
 navigator.egg-info/
+
+# Postgres dump of the built index (make dump), published as a release asset
+index.dump

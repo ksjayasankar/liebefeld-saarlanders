@@ -113,12 +113,12 @@ class ReportSection(Strict):
 
 @cache
 def _client() -> OpenAI:
-    return OpenAI(base_url=env("APERTUS_BASE_URL"), api_key=env("APERTUS_API_KEY"), max_retries=0, timeout=180)
+    return OpenAI(base_url=env("LLM_BASE_URL"), api_key=env("LLM_API_KEY"), max_retries=0, timeout=180)
 
 
 @cache
 def _slots() -> threading.BoundedSemaphore:
-    return threading.BoundedSemaphore(int(env("APERTUS_PARALLEL")))
+    return threading.BoundedSemaphore(int(env("LLM_PARALLEL")))
 
 
 def prompt(lines: list[str], instruction: str) -> str:
@@ -166,7 +166,7 @@ def gateway_check():
     from concurrent.futures import ThreadPoolExecutor
     c = _client()
     print("models:", [m.id for m in c.models.list().data])
-    model = env("APERTUS_8B")
+    model = env("LLM_NAME")
     ask = lambda **kw: c.chat.completions.create(model=model, temperature=0.2, max_tokens=200, **kw)
     t = time.time()
     r = ask(messages=[{"role": "user", "content": "Antworte auf Englisch: Was ist ein CGM-Sensor?"}])
@@ -181,4 +181,4 @@ def gateway_check():
                             "name": "verdict", "schema": Verdict.model_json_schema()}}})]:
         r = c.chat.completions.create(model=model, temperature=0, max_tokens=20, messages=q, logprobs=True, top_logprobs=5, **extra)
         print(f"{name}: {r.choices[0].message.content!r} logprobs={r.choices[0].logprobs is not None}")
-    print("70B listed:", env("APERTUS_70B") in [m.id for m in c.models.list().data])
+    print("70B listed:", env("LLM_NAME_LARGE") in [m.id for m in c.models.list().data])

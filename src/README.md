@@ -4,24 +4,19 @@ A workspace for the Bern Economic Development Agency. A company considering Bern
 
 The tool shows contact data collected from public pages and has no login yet: run it only where agency staff alone can reach it.
 
-- `plan.md`: the specification.
-- `docs/superpowers/plans/2026-10-18-navigator.md`: the implementation plan.
-- `flow.md`: the end-to-end flow and the code that implements each step.
-- `decision.md`: decisions taken while building.
-- `issues.md`: problems met and how they were solved.
+- `../technical_report.md`: architecture, evaluation and limitations.
 - `design_decisions.md`: front-end design decisions.
-- `structure.md`: what each folder and file does.
 
 ## Run it
 
 ```bash
-cp .env.example .env          # fill in DB_PASSWORD, APERTUS_API_KEY; every setting is required
-docker compose up -d --build  # db (Postgres 16 + pgvector), api (FastAPI), web (React) on http://localhost:8080
-make index DOMAIN=medtech     # fetch, extract, enrich (Apertus), embed (BGE-M3), load, check, go live
+cp .env.example .env          # fill in DB_PASSWORD (also in DATABASE_URL) and LLM_API_KEY; every setting is required
+make restore                  # download the team's built index (275 MB, release index-v1) and load it into Postgres
+make up                       # db (Postgres 16 + pgvector), api (FastAPI), web (React) on http://localhost:8080
 make eval DOMAIN=medtech      # recall@10 and the other measures on the answer key (SPLIT=all for the hold-out)
 ```
 
-The API does not start until a live index exists and the Apertus gateway lists the configured models.
+The first start downloads the local models (BGE-M3, the reranker, Docling) into a Docker volume, which takes a few minutes. The API does not start until a live index exists and the Apertus endpoint lists the configured models (`LLM_NAME`, `LLM_NAME_LARGE`). To build the index from the live sites instead of restoring it, run `make up` and then `make index DOMAIN=medtech` (fetch, extract, enrich with Apertus, embed with BGE-M3, load, check, go live; several hours).
 
 **Development on the host** (macOS, Python 3.11 in `.venv`, database in Docker on port 5433):
 
@@ -43,7 +38,7 @@ make web      # http://localhost:5173, proxies /api to port 8000
 
 ## Sovereignty
 
-Apertus is the only language model. It is reached through an OpenAI-compatible address (`APERTUS_BASE_URL`), so it moves from the hackathon gateway to a self-hosted vLLM server with no code change. Embeddings (BGE-M3) and the reranker (bge-reranker-v2-m3) are open-weights models running locally. No other outside service is used at run time.
+Apertus is the only language model. It is reached through an OpenAI-compatible address (`LLM_BASE_URL`), so it moves from the hackathon gateway to a self-hosted vLLM server with no code change. Embeddings (BGE-M3) and the reranker (bge-reranker-v2-m3) are open-weights models running locally. No other outside service is used at run time.
 
 ## Adding a site
 
@@ -51,4 +46,4 @@ Add one host line to `config/domains/medtech.yaml` and run `make index DOMAIN=me
 
 ## Data
 
-Page text belongs to the institutions. The repository ships code and evaluation files only. `navigator snapshot export <dir>` and `navigator snapshot import <dir>` share the dataset and the model caches within the team. MeSH data: courtesy of the U.S. National Library of Medicine. German MeSH: ZB MED, CC BY 4.0. Wikidata: CC0.
+Page text belongs to the institutions. The repository ships code and evaluation files only; the built index (`make dump`, `make restore`) is published separately as a release asset so the system runs without a crawl. `navigator snapshot export <dir>` and `navigator snapshot import <dir>` share the dataset and the model caches within the team. MeSH data: courtesy of the U.S. National Library of Medicine. German MeSH: ZB MED, CC BY 4.0. Wikidata: CC0.

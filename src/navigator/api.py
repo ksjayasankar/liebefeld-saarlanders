@@ -48,7 +48,7 @@ async def lifespan(app: FastAPI):
             b = conn.execute(sql.SQL("SELECT * FROM {}.build").format(sql.Identifier(f"live_{d}"))).fetchone()
             assert (b["model_id"], b["dim"]) == (embed.MODEL_ID, embed.DIM), f"live_{d} was built with {b['model_id']}"
     listed = {m.id for m in apertus._client().models.list().data}
-    assert {env("APERTUS_8B"), env("APERTUS_70B")} <= listed, f"gateway does not list the configured models: {listed}"
+    assert {env("LLM_NAME"), env("LLM_NAME_LARGE")} <= listed, f"gateway does not list the configured models: {listed}"
     embed.embedder(), embed.reranker(), pdf.converter()
     STATE.update(domains=domains, pool=pool, hits=defaultdict(deque))
     yield
@@ -250,5 +250,5 @@ def health():
     with STATE["pool"].connection() as conn:
         domains = {d: dict(conn.execute(sql.SQL("SELECT id AS build_id, counts, model_id FROM {}.build").format(
             sql.Identifier(f"live_{d}"))).fetchone()) for d in STATE["domains"]}
-    return Health(domains=domains, models={"8b": env("APERTUS_8B"), "70b": env("APERTUS_70B"), "embedding": embed.MODEL_ID,
+    return Health(domains=domains, models={"8b": env("LLM_NAME"), "70b": env("LLM_NAME_LARGE"), "embedding": embed.MODEL_ID,
                                            "reranker": "@".join(embed.RERANKER)})
